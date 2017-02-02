@@ -375,4 +375,11 @@ public class ContextTreeManager {
     public void reload() throws IOException {
         init();
     }
+
+    public void choseRootNodeUpHitSummary(int chosenResult) throws IOException {
+        Node rootNode = getNode(contextTree.getRootNodeId());
+        rootNode.setChosenSummary(chosenResult);
+        save();
+
+    }
 }

@@ -20,6 +20,7 @@ public class ContextTreeHtml {
 
     private String nodeToHtml(Node node) {
         StringBuilder sb = new StringBuilder();
+        boolean isRoot = node.getId().equals(contextTree.getRootNodeId());
 
         sb.append("<div class='card'>")
                 .append("<div class='card-header'>").append("<b>Id:</b>&nbsp;")
@@ -38,17 +39,40 @@ public class ContextTreeHtml {
                 .append("<br><b>Completed Up HIT ids:</b>&nbsp;")
                 .append(node.getCompletedUpHitIds());
 
-
+        boolean hasPicked = node.getChosenSummary() != null;
+        if (isRoot) {
+            sb.append("<form id='root_node_form'>");
+            if (hasPicked) {
+                sb.append("<button id='edit_root_btn' type='button' class='btn btn-info'>Edit</button>");
+            }
+        }
         for (int i = 0; i < node.getSummaries().size(); i++) {
             String summary = StringEscapeUtils.escapeHtml4(node.getSummaries().get(i));
+
             boolean isPicked = node.getChosenSummary() != null && node.getChosenSummary() == i;
-            sb.append("<br><b>")
-                    .append(isPicked ? "<u>" : "")
+            sb.append("<br>");
+
+            if (isRoot) {
+                sb.append("<input ");
+                if (isPicked) {
+                    sb.append("checked ");
+                }
+                if (hasPicked){
+                    sb.append("disabled ");
+                }
+                sb.append("type='radio' name='rootChosen' value='" + i + "'>&nbsp;");
+            }
+
+            sb.append("<b>")
+                    .append(isPicked && !isRoot ? "<u>" : "")
                     .append("Summary #")
                     .append(i + 1)
-                    .append(isPicked ? "</u>" : "")
+                    .append(isPicked && !isRoot ? "</u>" : "")
                     .append(":</b>&nbsp;")
                     .append(StringUtils.replace(summary, "\n", "<br>"));
+        }
+        if (isRoot) {
+            sb.append("</form>");
         }
         if (!node.isLeaf()) {
             sb.append("<br><b>Children:</b>&nbsp;");

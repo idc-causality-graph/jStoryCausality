@@ -29,6 +29,25 @@
             background: #fff url(http://odyniec.net/articles/turning-lists-into-trees/lastnode.png) no-repeat;
         }
     </style>
+    <script language="JavaScript" type="application/javascript">
+        $(function () {
+            var $inputs = $('#root_node_form input');
+            $inputs.click(function () {
+                var $this = $(this);
+                var idx = $this.val();
+                $.post("/contextTree/rootNode/choseUpResult", {'chosenResult': idx},
+                        function (result) {
+                            console.log(result);
+                        });
+//                console.log('clicked on '+$this.val());
+            });
+
+            $('#edit_root_btn').click(function () {
+                $inputs.removeAttr('disabled');
+                $(this).hide();
+            });
+        })
+    </script>
 
 </head>
 <body>
@@ -62,7 +81,7 @@
             </form>
         </div>
     </div>
-   <div>&nbsp;</div>
+    <div>&nbsp;</div>
 ${htmlTree}
 </div>
 </body>
