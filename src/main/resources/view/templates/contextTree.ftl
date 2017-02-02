@@ -39,7 +39,6 @@
                         function (result) {
                             console.log(result);
                         });
-//                console.log('clicked on '+$this.val());
             });
 
             $('#edit_root_btn').click(function () {
