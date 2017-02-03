@@ -26,24 +26,41 @@ public class ContextTreeHtml {
                 .append("<div class='card-header'>").append("<b>Id:</b>&nbsp;")
                 .append("<a name='").append(node.getId()).append("'>")
                 .append(node.getId())
-                .append("</a>")
-                .append("</div><div class='card-block'>")
-                .append("<b>Parent:</b>&nbsp;")
-                .append("<a href='#").append(node.getParentNodeId()).append("'>").append(node.getParentNodeId()).append("</a>")
-                .append("<br><b>leaf?</b>&nbsp;")
-                .append(node.isLeaf())
-                .append("<br><b>up phase done?</b>&nbsp;")
+                .append("</a>");
+        if (node.isLeaf()) {
+            sb.append("&nbsp;&nbsp;&nbsp;<b>LEAF</b>");
+        }
+
+        sb.append("</div><div class='card-block'>");
+        if (node.getParentNodeId() != null) {
+            sb.append("<b>Parent:</b>&nbsp;")
+                    .append("<a href='#").append(node.getParentNodeId()).append("'>").append(node.getParentNodeId()).append("</a><br>");
+        }
+        sb.append("<b>up phase done?</b>&nbsp;")
                 .append(node.isUpPhaseDone())
+                .append("<br><b>Down phase done?</b>&nbsp;")
+                .append(node.isDownPhaseDone())
                 .append("<br><b>Up HIT ids:</b>&nbsp;")
                 .append(node.getUpHitIds())
                 .append("<br><b>Completed Up HIT ids:</b>&nbsp;")
-                .append(node.getCompletedUpHitIds());
+                .append(node.getCompletedUpHitIds())
+                .append("<br><b>Down HIT ids:</b>&nbsp;")
+                .append(node.getDownHitIds())
+                .append("<br><b>Completed Up HIT ids:</b>&nbsp;")
+                .append(node.getCompletedDownHitIds())
+                .append("<br><b>Down phase rates:</b>&nbsp;")
+                .append(node.getSummaryRates())
+                .append("<br><b>Average rate:</b>&nbsp;")
+                .append(node.getAverageRate())
+                .append("<br><b>Norm average rate:&nbsp;")
+                .append(String.format("%.2f", node.getNormalizedAverageRate()))
+                .append("</b>");
 
         boolean hasPicked = node.getChosenSummary() != null;
         if (isRoot) {
             sb.append("<form id='root_node_form'>");
             if (hasPicked) {
-                sb.append("<button id='edit_root_btn' type='button' class='btn btn-info'>Edit</button>");
+                sb.append("<button id='edit_root_btn' type='button' class='btn btn-secondary'>Edit</button>");
             }
         }
         for (int i = 0; i < node.getSummaries().size(); i++) {
@@ -57,7 +74,7 @@ public class ContextTreeHtml {
                 if (isPicked) {
                     sb.append("checked ");
                 }
-                if (hasPicked){
+                if (hasPicked) {
                     sb.append("disabled ");
                 }
                 sb.append("type='radio' name='rootChosen' value='" + i + "'>&nbsp;");
@@ -92,14 +109,9 @@ public class ContextTreeHtml {
     @SneakyThrows
     public String create() {
         output = new StringBuilder();
-//        output.append(
-//                IOUtils.toString(
-//                        ContextTreeHtml.class.getResource("/view/contextTreeHtmlHeader.html").openStream(),
-//                        Charset.defaultCharset()));
         Node rootNode = contextTree.getNodeRepository().get(contextTree.getRootNodeId());
         isRoot = true;
         visitSubtree(rootNode, false);
-//        output.append("</body></html>");
         return output.toString();
     }
 
@@ -108,7 +120,11 @@ public class ContextTreeHtml {
             output.append("<ul class='tree'>");
             isRoot = false;
         } else {
-            output.append("<ul>");
+            if (last) {
+                output.append("<ul class='last'>\n");
+            } else {
+                output.append("<ul>\n");
+            }
         }
         output.append("\n");
         if (last) {
@@ -119,7 +135,6 @@ public class ContextTreeHtml {
         output
                 .append("<div>")
                 .append(nodeToHtml(node))
-//                    .append(StringEscapeUtils.escapeHtml4(node.toString())).append("\n")
                 .append("</div>")
                 .append("</li>\n");
 

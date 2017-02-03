@@ -1,6 +1,7 @@
 package il.ac.idc.yonatan.causality.mturk;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,6 +75,7 @@ public class HitManagerImpl implements HitManager {
     @Data
     public static class HitStorage {
         private Map<String, UpHitResultStorage> upHits = new HashMap<>();
+        private Map<String, DownHitResultStorage> downHits = new HashMap<>();
     }
 
     @Data
@@ -79,6 +84,15 @@ public class HitManagerImpl implements HitManager {
     public static class UpHitResultStorage {
         private UpHitResult upHitResult;
         private LinkedHashMap<String, List<String>> childIdToSummaries;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DownHitResultStorage {
+        private DownHitResult downHitResult;
+        private String summary;
+        private List<String> childrenSummaries;
     }
 
     public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries) {
@@ -91,6 +105,7 @@ public class HitManagerImpl implements HitManager {
         saveDb(hitStorage);
         return hitId;
     }
+
 
     public UpHitResult getUpHitForReview(String hitId) {
         return readDb().getUpHits().get(hitId).getUpHitResult();
@@ -107,27 +122,41 @@ public class HitManagerImpl implements HitManager {
             hitResult.setHitSummary(null);
         }
         saveDb(db);
-//        UpHitResult upHitResult=new UpHitResult();
-//        Scanner scanner = new Scanner(System.in);
-//        System.out.println("Accept? ");
-//        String accept = scanner.nextLine();
-//        if (accept.toLowerCase().equals("y")){
-//            upHitResult.setHitDone(true);
-//        } else {
-//            upHitResult.setHitDone(false);
-//            return upHitResult;
-//        }
-//        System.out.println("Summary: ");
-//        upHitResult.setHitSummary(scanner.nextLine());
-//        //TODO simulate chosen children ...
-//        return upHitResult;
+    }
+
+    public DownHitResult getDownHitForReview(String hitId) {
+        return readDb().getDownHits().get(hitId).getDownHitResult();
+    }
+
+    public void submitDownHitReview(String hitId, boolean hitApproved, String reason) {
+        HitStorage db = readDb();
+        if (hitApproved) {
+            db.getDownHits().remove(hitId);
+        } else {
+            DownHitResult hitResult = db.getDownHits().get(hitId).getDownHitResult();
+            hitResult.setHitDone(false);
+            hitResult.setGrades(Collections.nCopies(hitResult.getGrades().size(), null));
+        }
+        saveDb(db);
+    }
+
+    @Override
+    public String createDownHit(String summary, List<String> childrenSummaries) {
+        String hitId = "HIT_D-" + RandomStringUtils.randomAlphanumeric(8);
+        HitStorage db = readDb();
+        DownHitResult downHitResult = new DownHitResult();
+        downHitResult.setGrades(new ArrayList<>(Collections.nCopies(childrenSummaries.size(), null)));
+        downHitResult.setHitDone(false);
+        DownHitResultStorage downHitResultStorage = new DownHitResultStorage(downHitResult, summary, childrenSummaries);
+        db.getDownHits().put(hitId, downHitResultStorage);
+        saveDb(db);
+        return hitId;
     }
 
     @GetMapping("/hits")
     public String generateHitsView(Model model) {
         HitStorage hitStorage = readDb();
         model.addAttribute("hitStorage", hitStorage);
-//        System.out.println(hitStorage.getUpHits().get("HIT-Tpoi9Ikk").childIdToSummaries.keySet());
         return "hits";
     }
 
@@ -135,12 +164,18 @@ public class HitManagerImpl implements HitManager {
     public String saveHits(@RequestParam Map<String, String> result) throws IOException {
         HitStorage hitStorage = readDb();
 
+        processUpHits(hitStorage, result);
+        processDownHits(hitStorage, result);
+        saveDb(hitStorage);
+        return "redirect:/hits";
+    }
+
+    private void processUpHits(HitStorage hitStorage, @RequestParam Map<String, String> result) {
         Set<String> hitIds = result.keySet().stream().filter(x -> x.endsWith("_hitsummary"))
                 .map(x -> StringUtils.substringBeforeLast(x, "_hitsummary"))
                 .collect(Collectors.toSet());
 
         for (String hitId : hitIds) {
-//            System.out.println("hitId: "+hitId);
             UpHitResultStorage upHitResultStorage = hitStorage.getUpHits().get(hitId);
             UpHitResult upHitResult = upHitResultStorage.getUpHitResult();
             Set<String> childIds = upHitResultStorage.childIdToSummaries.keySet();
@@ -162,8 +197,33 @@ public class HitManagerImpl implements HitManager {
                 upHitResult.setHitDone(true);
             }
         }
-        saveDb(hitStorage);
-        return "redirect:/hits";
+    }
+
+    private void processDownHits(HitStorage hitStorage, Map<String, String> result) {
+        Set<String> hitAnswers = result.keySet().stream().filter(x -> x.startsWith("DOWN_"))
+                .collect(Collectors.toSet());
+
+        for (String hitAnswer : hitAnswers) {
+            String hitId =
+                    StringUtils.substringBeforeLast(
+                            StringUtils.substringAfter(hitAnswer, "DOWN_")
+                            , "_");
+            int answerIdx =
+                    NumberUtils.toInt(
+                            StringUtils.substringAfterLast(hitAnswer, "_"));
+            int grade = NumberUtils.toInt(result.get(hitAnswer));
+            DownHitResultStorage downHitResultStorage = hitStorage.getDownHits().get(hitId);
+
+            DownHitResult downHitResult = downHitResultStorage.getDownHitResult();
+            List<Integer> grades = downHitResult.getGrades();
+            downHitResult.getGrades().set(answerIdx, grade);
+            if (downHitResult.getGrades().stream().allMatch(g -> g != null)) {
+                downHitResult.setHitDone(true);
+            }
+            System.out.println(hitId + " " + downHitResult.getGrades());
+        }
+
+
     }
 
 }

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Review Up Hits</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
     <script src="/jquery-3.1.1.min.js"></script>
@@ -18,10 +19,12 @@
 </head>
 <body>
 <div class="container-fluid">
+    <h1>Review UP hits</h1>
 <form method="post">
     <div class="sticky-top">
         <div class="d-flex flex-row">
             <button class="p-2 btn btn-info" type="submit">Submit</button>
+            <a class="p-2 btn btn-info" href="">Reload</a>
         </div>
     </div>
 <#list hitsForReview as hitForReview>

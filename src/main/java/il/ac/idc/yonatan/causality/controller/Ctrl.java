@@ -3,7 +3,9 @@ package il.ac.idc.yonatan.causality.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.google.common.base.Splitter;
 import il.ac.idc.yonatan.causality.contexttree.ContextTreeManager;
+import il.ac.idc.yonatan.causality.contexttree.DownHitReviewData;
 import il.ac.idc.yonatan.causality.contexttree.UpHitReviewData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +41,7 @@ public class Ctrl {
     @GetMapping("contextTree")
     public String getContextTree(Model model) {
         model.addAttribute("htmlTree", contextTreeManager.dumpHtml());
+        model.addAttribute("phase", contextTreeManager.getPhase());
         return "contextTree";
     }
 
@@ -67,6 +70,19 @@ public class Ctrl {
         return "redirect:/contextTree";
     }
 
+    @PostMapping("contextTree/progressDown")
+    public String progressDownHits(RedirectAttributes redir) throws IOException {
+        log.info("Starting down phase");
+        List<String> errors = contextTreeManager.canCreateHitsForDownPhase();
+        if (errors.isEmpty()) {
+            contextTreeManager.createHitsForDownPhase();
+        } else {
+            redir.addFlashAttribute("errors", errors);
+        }
+        log.info("Errors: {}", errors);
+        return "redirect:/contextTree";
+    }
+
     @PostMapping("contextTree/rootNode/choseUpResult")
     public ResponseEntity<Void> choseSummaryUpHitRootNode(@RequestParam("chosenResult") Integer chosenResult) throws IOException {
         contextTreeManager.choseRootNodeUpHitSummary(chosenResult);
@@ -77,7 +93,7 @@ public class Ctrl {
     public String reviewUpPhase(Model model) {
         List<UpHitReviewData> hitsForReview = contextTreeManager.getUpPhaseHitsForReviews();
         model.addAttribute("hitsForReview", hitsForReview);
-        return "reviews";
+        return "reviewUpHits";
     }
 
     @PostMapping(value = "contextTree/reviewsUpPhase")
@@ -103,6 +119,31 @@ public class Ctrl {
             contextTreeManager.handleUpPhaseReview(nodeId, hitId, summary, approved, reason, chosenChildrenSummaries);
         }
         return "redirect:/contextTree/reviewsUpPhase";
+    }
+
+    @GetMapping("contextTree/reviewsDownPhase")
+    public String reviewDownPhase(Model model){
+        List<DownHitReviewData> hitsForReview=contextTreeManager.getDownPhaseHitsForReview();
+        model.addAttribute("hitsForReview", hitsForReview);
+        return "reviewDownHits";
+    }
+
+    @PostMapping("contextTree/reviewsDownPhase")
+    public String commitReviewDownPhase(@RequestParam Map<String, String> result) throws IOException {
+        Set<String> hitIds = result.keySet().stream()
+                .filter(x -> x.endsWith("_approve"))
+                .map(x -> StringUtils.substringBeforeLast(x, "_approve"))
+                .collect(Collectors.toSet());
+        for (String hitId : hitIds) {
+            boolean approved = StringUtils.equals(result.get(hitId + "_approve"), "1");
+            String reason = result.get(hitId + "_reason");
+            String nodeId = result.get(hitId + "_nodeid");
+            String gradesStr = result.get(hitId + "_grades");
+            List<Integer> grades = Splitter.on(",").trimResults().splitToList(gradesStr)
+                    .stream().map(Integer::parseInt).collect(Collectors.toList());
+            contextTreeManager.handleDownPhaseReview(nodeId, hitId, approved, reason, grades);
+        }
+        return "redirect:/contextTree/reviewsDownPhase";
     }
 
     private Map<String, Integer> getChosenChildrenSummariesFromParam(String param) throws IOException {

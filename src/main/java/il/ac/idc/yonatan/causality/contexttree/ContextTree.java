@@ -19,6 +19,6 @@ public class ContextTree {
     private Map<String, Node> nodeRepository = new HashMap<>();
     private LinkedList<NodeLevel> nodeLevels = new LinkedList<>();
     private int upLevelStep;
-
+    private Phases phase;
 
 }

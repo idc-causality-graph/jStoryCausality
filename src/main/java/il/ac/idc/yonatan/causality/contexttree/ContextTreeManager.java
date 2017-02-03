@@ -5,16 +5,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multisets;
 import il.ac.idc.yonatan.causality.config.AppConfig;
-import il.ac.idc.yonatan.causality.mturk.HitManagerImpl;
+import il.ac.idc.yonatan.causality.mturk.HitManager;
+import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -30,12 +31,14 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -46,23 +49,27 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 public class ContextTreeManager {
 
-    @Autowired
-    private AppConfig appConfig;
+    private final AppConfig appConfig;
+
+    private final ObjectMapper objectMapper;
+
+    private final ResourceLoader resourceLoader;
+
+    private final HitManager hitManager;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
-
-    @Autowired
-    private HitManagerImpl hitManager;
+    public ContextTreeManager(AppConfig appConfig, ObjectMapper objectMapper, HitManager hitManager, ResourceLoader resourceLoader) {
+        this.appConfig = appConfig;
+        this.objectMapper = objectMapper;
+        this.hitManager = hitManager;
+        this.resourceLoader = resourceLoader;
+    }
 
     @PostConstruct
     public void init() throws IOException {
         File contextFile = appConfig.getContextFile();
         if (!contextFile.exists()) {
-            this.contextTree = new ContextTree();
+            contextTree = new ContextTree();
             log.info("Starting new context file {} from resource {}", contextFile, appConfig.getInputResource());
             try (InputStream inputResource = resourceLoader.getResource(appConfig.getInputResource()).getInputStream()) {
                 initialize(inputResource);
@@ -70,8 +77,7 @@ public class ContextTreeManager {
         } else {
             log.info("Loading context file from {}", contextFile);
             try (InputStream is = new FileInputStream(contextFile)) {
-                ContextTree contextTree = objectMapper.readValue(is, ContextTree.class);
-                this.contextTree = contextTree;
+                contextTree = objectMapper.readValue(is, ContextTree.class);
             }
         }
     }
@@ -79,21 +85,18 @@ public class ContextTreeManager {
     private ContextTree contextTree;
 
     public List<String> canCreateHitsForUpPhase() {
-        System.out.println(MultimapBuilder.ListMultimapBuilder
-                .linkedHashKeys()
-                .arrayListValues()
-                .build().getClass());
-
         List<String> errors = new ArrayList<>();
+        Phases phase = contextTree.getPhase();
+        if (phase != Phases.UP_PHASE) {
+            errors.add("Tree in phase " + phase);
+            return errors;
+        }
         NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
-        if (nodeLevel==null){
+        if (nodeLevel == null) {
             errors.add("Already at the top level");
             return errors;
         }
-//        if (nodeLevel.getNodeIds().size() <= 1) {
-//            errors.add("Already at the top level");
-//            return errors;
-//        }
+
         List<Node> nodes = getNodes(nodeLevel);
         for (Node node : nodes) {
             if (node.getUpHitIds().size() != node.getCompletedUpHitIds().size()) {
@@ -105,7 +108,7 @@ public class ContextTreeManager {
 
     public void createHitsForUpPhase() throws IOException {
         NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
-        if (nodeLevel==null){
+        if (nodeLevel == null) {
             log.warn("Trying to create hits on root node");
             return;
         }
@@ -185,64 +188,52 @@ public class ContextTreeManager {
     }
 
     private int getMaxVotes(Collection<Integer> votes) {
-//        HashMultiset<Integer> multisetVotes = HashMultiset.create(votes);
         return Multisets.copyHighestCountFirst(ImmutableMultiset.copyOf(votes))
                 .iterator().next();
-//        int bestCount = 0;
-//        int best = 0;
-//        for (Integer vote : multisetVotes.elementSet()) {
-//            if (multisetVotes.count(vote) > bestCount) {
-//                best = vote;
-//            }
-//        }
-//        return best;
     }
 
+    public List<DownHitReviewData> getDownPhaseHitsForReview() {
+        List<DownHitReviewData> result = new ArrayList<>();
+        if (contextTree.getPhase() != Phases.DOWN_PHASE) {
+            return result;
+        }
+        Collection<Node> nodes = getAllNodes();
+        for (Node node : nodes) {
+            List<String> downHitIds = node.getDownHitIds();
+            Set<String> completedDownHitIds = node.getCompletedDownHitIds();
+            for (String hitId : downHitIds) {
+                if (completedDownHitIds.contains(hitId)) {
+                    continue;
+                }
+                DownHitReviewData downHitReviewData = new DownHitReviewData();
+                downHitReviewData.setHitId(hitId);
+                downHitReviewData.setNodeId(node.getId());
+                downHitReviewData.setNodeSummary(getSummary(node));
 
-//    public void reviewHitsForUpPhase() {
-//        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
-//        List<Node> nodes = getNodes(nodeLevel);
-//        // go over all nodes in the level
-//        for (Node node : nodes) {
-//            List<String> upHitIds = node.getUpHitIds();
-//            // go over all hits for node
-//            for (String upHitId : upHitIds) {
-//                if (node.getCompletedUpHitIds().contains(upHitId)) {
-//                    continue;
-//                }
-//                UpHitResult hitResult = hitManager.getUpHitForReview(upHitId);
-//                boolean hitDone = hitResult.isHitDone();
-//                if (hitDone) {
-//                    node.getCompletedUpHitIds().add(upHitId);
-//                    node.getSummaries().add(hitResult.getHitSummary());
-//
-//                    // add to vote counts of summaries
-//                    Map<String, Integer> chosenChildrenSummaries = hitResult.getChosenChildrenSummaries();
-//                    Multimap<String, Integer> chosenSummariesForChildren = node.getChosenSummariesForChildren();
-//                    for (Map.Entry<String, Integer> entry : chosenChildrenSummaries.entrySet()) {
-//                        chosenSummariesForChildren.put(entry.getKey(), entry.getValue());
-//                    }
-//                    // if all hits are done
-//                    if (node.getCompletedUpHitIds().size() == upHitIds.size()) {
-//                        // mark node as done for phase
-//                        node.setUpPhaseDone(true);
-//                        for (String childId : node.getChildIds()) {
-//                            // calculate best summary
-//                            int vote = getMaxVotes(chosenSummariesForChildren.get(childId));
-//                            getNode(childId).setChosenSummary(vote);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
+                DownHitResult downHitForReview = hitManager.getDownHitForReview(hitId);
+                downHitReviewData.setHitDone(downHitForReview.isHitDone());
+                if (downHitForReview.isHitDone()) {
+                    List<Integer> grades = downHitForReview.getGrades();
+                    List<Node> children = getNodes(node.getChildIds());
+                    for (int i = 0; i < children.size(); i++) {
+                        String childSummary = getSummary(children.get(i));
+                        Integer summaryRank = grades.get(i);
+                        downHitReviewData.getRanks().add(Pair.of(childSummary, summaryRank));
+                    }
+                }
+
+                result.add(downHitReviewData);
+            }
+        }
+        return result;
+    }
 
     private List<Node> getNodes(NodeLevel nodeLevel) {
-        return nodeLevel.getNodeIds().stream().map(id -> this.getNode(id)).collect(toList());
+        return nodeLevel.getNodeIds().stream().map(this::getNode).collect(toList());
     }
 
     private List<Node> getChildren(Node node) {
-        return node.getChildIds().stream().map(id -> this.getNode(id)).collect(toList());
+        return node.getChildIds().stream().map(this::getNode).collect(toList());
     }
 
     private NodeLevel getCurrentUpPhaseNodeLevel() {
@@ -268,6 +259,7 @@ public class ContextTreeManager {
         String rootNodeId = contextTree.getNodeLevels().getLast().getNodeIds().get(0);
         contextTree.setRootNodeId(rootNodeId);
         contextTree.setUpLevelStep(1);
+        contextTree.setPhase(Phases.UP_PHASE);
     }
 
     public void save() throws IOException {
@@ -366,6 +358,10 @@ public class ContextTreeManager {
                     .allMatch(Node::isUpPhaseDone);
             if (isAllNodesDone) {
                 contextTree.setUpLevelStep(contextTree.getUpLevelStep() + 1);
+                if (getCurrentUpPhaseNodeLevel() == null) {
+                    // starting down phase
+                    contextTree.setPhase(Phases.DOWN_PHASE);
+                }
             }
             save();
         }
@@ -380,6 +376,79 @@ public class ContextTreeManager {
         Node rootNode = getNode(contextTree.getRootNodeId());
         rootNode.setChosenSummary(chosenResult);
         save();
+    }
 
+    public List<String> canCreateHitsForDownPhase() {
+        Phases phase = contextTree.getPhase();
+        if (phase != Phases.DOWN_PHASE) {
+            return newArrayList("Context tree in phase " + phase);
+        }
+        Node rootNode = getNode(contextTree.getRootNodeId());
+        if (!rootNode.getDownHitIds().isEmpty()) {
+            return newArrayList("HITs already created for " + phase);
+        }
+        return Collections.emptyList();
+    }
+
+    private Collection<Node> getAllNodes() {
+        return contextTree.getNodeRepository().values();
+    }
+
+    public void createHitsForDownPhase() throws IOException {
+        Collection<Node> allNodes = getAllNodes();
+        for (Node node : allNodes) {
+            if (node.getId().equals(contextTree.getRootNodeId())) {
+                //root node, maximum grade
+                node.getSummaryRates().add(7);
+            }
+            if (node.isLeaf()) {
+                continue;
+            }
+            String summary = getSummary(node);
+            List<Node> children = getNodes(node.getChildIds());
+            List<String> childrenSummaries = children.stream().map(this::getSummary).collect(toList());
+            for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
+                String hitId = hitManager.createDownHit(summary, childrenSummaries);
+                node.getDownHitIds().add(hitId);
+            }
+        }
+        save();
+
+    }
+
+    private List<Node> getNodes(List<String> nodeIds) {
+        return nodeIds.stream().map(id -> contextTree.getNodeRepository().get(id)).collect(toList());
+    }
+
+    private String getSummary(Node node) {
+        return node.getSummaries().get(node.getChosenSummary());
+    }
+
+    public void handleDownPhaseReview(String nodeId, String hitId, boolean approved, String reason,
+                                      List<Integer> grades) throws IOException {
+        Node node = getNode(nodeId);
+        if (approved) {
+            List<Node> nodes = getNodes(node.getChildIds());
+            for (int i = 0; i < nodes.size(); i++) {
+                nodes.get(i).getSummaryRates().add(grades.get(i));
+            }
+            node.getCompletedDownHitIds().add(hitId);
+
+
+            //Check if are done. If so, perform the next step
+            boolean isAllNodesDone = getAllNodes().stream()
+                    .allMatch(Node::isDownPhaseDone);
+            if (isAllNodesDone) {
+                // down phase is done. we have a full context tree.
+                contextTree.setPhase(Phases.DONE);
+            }
+            save();
+        }
+        hitManager.submitDownHitReview(hitId, approved, reason);
+
+    }
+
+    public Phases getPhase() {
+        return contextTree.getPhase();
     }
 }
