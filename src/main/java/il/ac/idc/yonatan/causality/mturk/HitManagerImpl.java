@@ -26,8 +26,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -91,8 +89,9 @@ public class HitManagerImpl implements HitManager {
     @NoArgsConstructor
     public static class DownHitResultStorage {
         private DownHitResult downHitResult;
-        private String summary;
-        private List<String> childrenSummaries;
+        private boolean leaf;
+        private List<String> allRootSummaries;
+        private List<String> nodeSummaries;
     }
 
     public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries) {
@@ -135,19 +134,20 @@ public class HitManagerImpl implements HitManager {
         } else {
             DownHitResult hitResult = db.getDownHits().get(hitId).getDownHitResult();
             hitResult.setHitDone(false);
-            hitResult.setGrades(Collections.nCopies(hitResult.getGrades().size(), null));
+            hitResult.setImportanceScore(null);
+            hitResult.setMostImportantEvent(null);
         }
         saveDb(db);
     }
 
     @Override
-    public String createDownHit(String summary, List<String> childrenSummaries) {
+    public String createDownHit(List<String> allRootSummaries, List<String> nodeSummaries, boolean isLeaf) {
         String hitId = "HIT_D-" + RandomStringUtils.randomAlphanumeric(8);
         HitStorage db = readDb();
         DownHitResult downHitResult = new DownHitResult();
-        downHitResult.setGrades(new ArrayList<>(Collections.nCopies(childrenSummaries.size(), null)));
         downHitResult.setHitDone(false);
-        DownHitResultStorage downHitResultStorage = new DownHitResultStorage(downHitResult, summary, childrenSummaries);
+        DownHitResultStorage downHitResultStorage = new DownHitResultStorage(
+                downHitResult, isLeaf, allRootSummaries, nodeSummaries);
         db.getDownHits().put(hitId, downHitResultStorage);
         saveDb(db);
         return hitId;
@@ -166,6 +166,7 @@ public class HitManagerImpl implements HitManager {
 
         processUpHits(hitStorage, result);
         processDownHits(hitStorage, result);
+        System.out.println(result);
         saveDb(hitStorage);
         return "redirect:/hits";
     }
@@ -200,30 +201,24 @@ public class HitManagerImpl implements HitManager {
     }
 
     private void processDownHits(HitStorage hitStorage, Map<String, String> result) {
-        Set<String> hitAnswers = result.keySet().stream().filter(x -> x.startsWith("DOWN_"))
+
+        Set<String> hitIds = result.keySet().stream()
+                .filter(x -> x.startsWith("DOWN_"))
+                .map(s -> StringUtils.substringAfter(s, "DOWN_"))
+                .map(s -> StringUtils.substringBeforeLast(s, "_"))
                 .collect(Collectors.toSet());
 
-        for (String hitAnswer : hitAnswers) {
-            String hitId =
-                    StringUtils.substringBeforeLast(
-                            StringUtils.substringAfter(hitAnswer, "DOWN_")
-                            , "_");
-            int answerIdx =
-                    NumberUtils.toInt(
-                            StringUtils.substringAfterLast(hitAnswer, "_"));
-            int grade = NumberUtils.toInt(result.get(hitAnswer));
+        for (String hitId : hitIds) {
             DownHitResultStorage downHitResultStorage = hitStorage.getDownHits().get(hitId);
-
-            DownHitResult downHitResult = downHitResultStorage.getDownHitResult();
-            List<Integer> grades = downHitResult.getGrades();
-            downHitResult.getGrades().set(answerIdx, grade);
-            if (downHitResult.getGrades().stream().allMatch(g -> g != null)) {
+            Integer importanceScore = NumberUtils.createInteger(result.get("DOWN_" + hitId + "_score"));
+            String mostImportantEvent = result.get("DOWN_" + hitId + "_event");
+            if (importanceScore != null && StringUtils.isNotEmpty(mostImportantEvent)) {
+                DownHitResult downHitResult = downHitResultStorage.getDownHitResult();
                 downHitResult.setHitDone(true);
+                downHitResult.setMostImportantEvent(mostImportantEvent);
+                downHitResult.setImportanceScore(importanceScore);
             }
-            System.out.println(hitId + " " + downHitResult.getGrades());
         }
-
-
     }
 
 }

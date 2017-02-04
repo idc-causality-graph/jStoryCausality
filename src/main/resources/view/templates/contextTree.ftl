@@ -4,7 +4,7 @@
     <title>Context Tree</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
-    <script src="/jquery-3.1.1.min.js"></script>
+    <script src="/js/jquery-3.1.1.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <style>
         .hit_id_done {

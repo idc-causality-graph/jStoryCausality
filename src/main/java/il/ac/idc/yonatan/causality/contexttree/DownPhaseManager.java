@@ -3,7 +3,6 @@ package il.ac.idc.yonatan.causality.contexttree;
 import il.ac.idc.yonatan.causality.config.AppConfig;
 import il.ac.idc.yonatan.causality.mturk.HitManager;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Created by ygraber on 2/4/17.
@@ -48,22 +46,19 @@ public class DownPhaseManager {
 
     public void createHitsForDownPhase() throws IOException {
         ContextTree contextTree = contextTreeManager.getContextTree();
+        Node rootNode = contextTree.getRootNode();
+        List<String> allRootSummaries = rootNode.getSummaries();
+
         Collection<Node> allNodes = contextTree.getAllNodes();
         for (Node node : allNodes) {
             if (node.getId().equals(contextTree.getRootNodeId())) {
                 //root node, a single maximum importance rating
-                node.getEventImportanceRatings().add(7);
-            }
-            if (node.isLeaf()) {
+                node.getEventImportanceScores().add(7);
                 continue;
             }
-            //TODO modify according Shai's implementation!
-            String summary = node.getBestSummary();
-            List<String> childrenSummaries = node.getChildren().stream()
-                    .map(Node::getBestSummary)
-                    .collect(toList());
+            List<String> nodeSummaries = node.getSummaries();
             for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
-                String hitId = hitManager.createDownHit(summary, childrenSummaries);
+                String hitId = hitManager.createDownHit(allRootSummaries, nodeSummaries, node.isLeaf());
                 node.getDownHitIds().add(hitId);
             }
         }
@@ -72,16 +67,13 @@ public class DownPhaseManager {
     }
 
     public void handleDownPhaseReview(String nodeId, String hitId, boolean approved, String reason,
-                                      List<Integer> grades) throws IOException {
+                                      Integer importanceScore, String mostImportantEvent) throws IOException {
         ContextTree contextTree = contextTreeManager.getContextTree();
         Node node = contextTree.getNode(nodeId);
         if (approved) {
-            List<Node> childNodes = node.getChildren();
-            for (int i = 0; i < childNodes.size(); i++) {
-                childNodes.get(i).getEventImportanceRatings().add(grades.get(i));
-            }
+            node.getEventImportanceScores().add(importanceScore);
+            node.getMostImportantEvents().add(mostImportantEvent);
             node.getCompletedDownHitIds().add(hitId);
-
 
             //Check if are done. If so, perform the next step
             boolean isAllNodesDone = contextTree.getAllNodes().stream()
@@ -98,11 +90,11 @@ public class DownPhaseManager {
 
     public List<DownHitReviewData> getDownPhaseHitsForReview() {
         ContextTree contextTree = contextTreeManager.getContextTree();
-        //TODO modify implementation!
         List<DownHitReviewData> result = new ArrayList<>();
         if (contextTree.getPhase() != Phases.DOWN_PHASE) {
             return result;
         }
+        List<String> rootNodeSummaries = contextTree.getRootNode().getSummaries();
         Collection<Node> nodes = contextTree.getAllNodes();
         for (Node node : nodes) {
             List<String> downHitIds = node.getDownHitIds();
@@ -114,23 +106,21 @@ public class DownPhaseManager {
                 DownHitReviewData downHitReviewData = new DownHitReviewData();
                 downHitReviewData.setHitId(hitId);
                 downHitReviewData.setNodeId(node.getId());
-                downHitReviewData.setNodeSummary(node.getBestSummary());
+                downHitReviewData.setRootNodeSummaries(rootNodeSummaries);
+                downHitReviewData.setNodeSummaries(node.getSummaries());
 
-                DownHitResult downHitForReview = hitManager.getDownHitForReview(hitId);
-                downHitReviewData.setHitDone(downHitForReview.isHitDone());
-                if (downHitForReview.isHitDone()) {
-                    List<Integer> grades = downHitForReview.getGrades();
-                    List<Node> children = node.getChildren();
-                    for (int i = 0; i < children.size(); i++) {
-                        String childSummary = children.get(i).getBestSummary();
-                        Integer summaryRank = grades.get(i);
-                        downHitReviewData.getRanks().add(Pair.of(childSummary, summaryRank));
-                    }
+                DownHitResult downHitResult = hitManager.getDownHitForReview(hitId);
+
+                downHitReviewData.setHitDone(downHitResult.isHitDone());
+                if (downHitResult.isHitDone()) {
+                    downHitReviewData.setImportanceScore(downHitResult.getImportanceScore());
+                    downHitReviewData.setMostImportantEvent(downHitResult.getMostImportantEvent());
                 }
 
                 result.add(downHitReviewData);
             }
         }
+        Collections.sort(result, (o1, o2) -> Boolean.compare(o1.isHitDone(),o2.isHitDone()));
         return result;
     }
 

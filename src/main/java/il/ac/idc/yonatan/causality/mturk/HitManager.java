@@ -12,8 +12,6 @@ import java.util.List;
 public interface HitManager {
     String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries);
 
-    String createDownHit(String summary, List<String> childrenSummaries);
-
     UpHitResult getUpHitForReview(String hitId);
 
     DownHitResult getDownHitForReview(String hitId);
@@ -22,4 +20,5 @@ public interface HitManager {
 
     void submitDownHitReview(String hitId, boolean hitApproved, String reason);
 
+    String createDownHit(List<String> allRootSummaries, List<String> nodeSummaries, boolean isLeaf);
 }

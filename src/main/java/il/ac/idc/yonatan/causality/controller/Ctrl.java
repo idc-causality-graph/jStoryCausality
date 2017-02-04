@@ -3,7 +3,6 @@ package il.ac.idc.yonatan.causality.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.google.common.base.Splitter;
 import il.ac.idc.yonatan.causality.contexttree.ContextTreeManager;
 import il.ac.idc.yonatan.causality.contexttree.DownHitReviewData;
 import il.ac.idc.yonatan.causality.contexttree.DownPhaseManager;
@@ -11,6 +10,7 @@ import il.ac.idc.yonatan.causality.contexttree.UpHitReviewData;
 import il.ac.idc.yonatan.causality.contexttree.UpPhaseManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -154,11 +154,10 @@ public class Ctrl {
             boolean approved = StringUtils.equals(result.get(hitId + "_approve"), "1");
             String reason = result.get(hitId + "_reason");
             String nodeId = result.get(hitId + "_nodeid");
-            String gradesStr = result.get(hitId + "_grades");
-            List<Integer> grades = Splitter.on(",").trimResults().splitToList(gradesStr)
-                    .stream().map(Integer::parseInt).collect(Collectors.toList());
-//            contextTreeManager.handleDownPhaseReview(nodeId, hitId, approved, reason, grades);
-            downPhaseManager.handleDownPhaseReview(nodeId, hitId, approved, reason, grades);
+            String mostImportantEvent = result.get(hitId + "_event");
+            Integer importanceScore = NumberUtils.createInteger(result.get(hitId + "_score"));
+            result.get(hitId + "_score");
+            downPhaseManager.handleDownPhaseReview(nodeId, hitId, approved, reason, importanceScore, mostImportantEvent);
         }
         return "redirect:/contextTree/reviewsDownPhase";
     }

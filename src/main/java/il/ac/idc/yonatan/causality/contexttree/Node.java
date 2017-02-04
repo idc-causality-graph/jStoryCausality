@@ -48,6 +48,13 @@ public class Node {
     @Setter(AccessLevel.NONE)
     private Set<String> completedDownHitIds = new HashSet<>();
 
+    /**
+     * A list of texts describing the most important event of this node.
+     * Each text is a text written by a unique worker in the down phase
+     */
+    @Setter(AccessLevel.NONE)
+    private List<String> mostImportantEvents = new ArrayList<>();
+
     private LinkedHashMap<String, List<String>> upHitTaskData;
 
     /**
@@ -58,10 +65,11 @@ public class Node {
     private List<Integer> bestSummaryVotes = new ArrayList<>();
 
     @Setter(AccessLevel.NONE)
-    private List<Integer> eventImportanceRatings = new ArrayList<>();
+    private List<Integer> eventImportanceScores = new ArrayList<>();
 
     public boolean isDownPhaseDone() {
-        return downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size();
+        //No down phase for root.
+        return parentNodeId==null || (downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
     }
 
     private List<String> childIds = new ArrayList<>();
@@ -82,12 +90,12 @@ public class Node {
         return upHitIds.size() > 0 && upHitIds.size() == completedUpHitIds.size();
     }
 
-    public double getAverageRate() {
-        return eventImportanceRatings.stream().collect(Collectors.averagingInt(x -> x));
+    public double getAverageImportanceScore() {
+        return eventImportanceScores.stream().collect(Collectors.averagingInt(x -> x));
     }
 
-    public double getNormalizedAverageRate() {
-        return Math.max((getAverageRate() - 1) / 6, 0);
+    public double getNormAverageImportanceScore() {
+        return Math.max((getAverageImportanceScore() - 1) / 6, 0);
     }
 
     /**

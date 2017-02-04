@@ -4,7 +4,7 @@
     <title>HIT Worker UI</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
-    <script src="/jquery-3.1.1.min.js"></script>
+    <script src="/js/jquery-3.1.1.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
 </head>
 <body>
@@ -60,32 +60,44 @@
     </#list>
 
     <#list hitStorage.downHits as hitId, downHit>
-        <div class="card-header card-${downHit.downHitResult.hitDone?then('secondary','primary card-inverse')} ">
-            HIT Id ${hitId}
-        </div>
-        <div class="card-block">
-            <div class="form-group row">
-                <label class="col-form-label col-sm-2">Summary</label>
-                <div class="form-control-static col-sm-10">${downHit.summary}</div>
+        <div class="card mb-5">
+            <div class="card-header card-${downHit.downHitResult.hitDone?then('secondary','primary card-inverse')} ">
+                HIT Id ${hitId}
             </div>
-            <#list downHit.childrenSummaries as childSummary>
-                <div class="row">
-                    <div class="col-sm-8">${childSummary}</div>
-                    <div class="col-sm-4">
-                        <div class="form-check form-check-inline">
-                            <#list 1..7 as rate>
-                                <label class="form-check-label">
-                                    <input class="form-check-input" type="radio"
-                                        <#if downHit.downHitResult.grades[childSummary?index]??>${(downHit.downHitResult.grades[childSummary?index]==rate)?then('checked','')}</#if>
-                                           name="DOWN_${hitId}_${childSummary?index}" value="${rate}">
-                                ${rate}
-                                </label>
-                            </#list>
-                        </div>
-                    </div>
+            <div class="card-block">
+                <label>Root node summaries</label>
+                <ul>
+                    <#list downHit.allRootSummaries as rootNodeSummary>
+                        <li>${rootNodeSummary}</li>
+                    </#list>
+                </ul>
+                <label>Node summaries</label>
+                <ul>
+                    <#list downHit.nodeSummaries as nodeSummary>
+                        <li>${nodeSummary}</li>
+                    </#list>
+                </ul>
+
+                <div class="form-group row">
+                    <label class="col-form-label col-sm-2">Most important event</label>
+                    <textarea name="DOWN_${hitId}_event"
+                              class="form-control col-sm-10">${downHit.downHitResult.mostImportantEvent!""}</textarea>
                 </div>
 
-            </#list>
+                <div class="form-group row">
+                    <label class="col-form-label col-sm-2">Importance score</label>
+                    <div class="form-check form-check-inline">
+                        <#list 1..7 as rate>
+                            <label class="form-check-label">
+                                <input class="form-check-input" type="radio"
+                                    <#if downHit.downHitResult.importanceScore??>${(downHit.downHitResult.importanceScore==rate)?then('checked','')}</#if>
+                                       name="DOWN_${hitId}_score" value="${rate}">
+                            ${rate}
+                            </label>
+                        </#list>
+                    </div>
+                </div>
+            </div>
         </div>
     </#list>
     </form>

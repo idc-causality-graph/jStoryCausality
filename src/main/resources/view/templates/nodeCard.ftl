@@ -15,13 +15,15 @@
                 </p>
             </div>
         </div>
-    </#if>
+    <#if (!node.leaf)>
         <div class="form-group row mb-0">
             <label class="col-sm-2 col-form-label">Up phase done?</label>
             <div class="col-sm-10">
                 <p class="form-control-static">${node.upPhaseDone?c}</p>
             </div>
         </div>
+    </#if>
+    </#if>
         <div class="form-group row mb-0">
             <label class="col-sm-2 col-form-label">Down phase done?</label>
             <div class="col-sm-10">
@@ -36,7 +38,8 @@
                     <#list node.upHitIds as upHitId>
                         <span class="<#if node.completedUpHitIds?seq_contains(upHitId)>hit_id_done</#if>">
                         ${upHitId}
-                        </span><#sep>,  </#sep>
+                        </span>
+                        <#sep><span>,  </span></#sep>
                     </#list>
                 </p>
             </div>
@@ -72,7 +75,8 @@
 
         </#list>
         <#if (bestSummaryIdx>-1 && isRoot)>
-            <small id="dblclick_message" class="form-text text-muted col-sm-12">Double click radio button to change</small>
+            <small id="dblclick_message" class="form-text text-muted col-sm-12">Double click radio button to change
+            </small>
         </#if>
         </div>
     <#if isRoot></form></#if>
@@ -82,13 +86,27 @@
             <div class="col-sm-10">
                 <p class="form-control-static">
                     <#list node.downHitIds as downHitId>
-                        <span class="<#if node.completedDownHitIds?seq_contains(downHitId)>hit_id_done</#if>">
-                            ${downHitId}<#sep>,  </#sep>
-                        </span>
+                        <span class="<#if node.completedDownHitIds?seq_contains(downHitId)>hit_id_done</#if>">${downHitId}</span>
+                        <#sep><span>,  </span></#sep>
                     </#list>
                 </p>
             </div>
         </div>
+        <#if (node.eventImportanceScores?size>0)>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Importance scores</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static">${node.eventImportanceScores?join(", ")}</p>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Average score</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static">${node.normAverageImportanceScore?string["0.##"]}
+                        (${node.averageImportanceScore?string["0.##"]})</p>
+                </div>
+            </div>
+        </#if>
     </#if>
 
     <#if !node.leaf>
