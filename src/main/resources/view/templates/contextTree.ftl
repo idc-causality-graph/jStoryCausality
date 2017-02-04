@@ -36,11 +36,10 @@
         }
 
         ul.tree .last {
-            background: #fff url(http://odyniec.net/articles/turning-lists-into-trees/lastnode.png) no-repeat;
+            background: url(http://odyniec.net/articles/turning-lists-into-trees/vline.png) no-repeat;
         }
         ul.tree li.last {
-            /*background: #fff url(http://odyniec.net/articles/turning-lists-into-trees/lastnode.png) no-repeat;*/
-            background: none;
+            background: #fff url(http://odyniec.net/articles/turning-lists-into-trees/lastnode.png) no-repeat;
         }
     </style>
     <script language="JavaScript" type="application/javascript">
