@@ -7,6 +7,14 @@
     <script src="/jquery-3.1.1.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <style>
+        .hit_id_done {
+            text-decoration: line-through;
+        }
+
+        .hdn {
+            display: none;
+        }
+
         ul.tree {
             list-style-type: none;
             margin: 0;
@@ -38,6 +46,7 @@
         ul.tree .last {
             background: url(http://odyniec.net/articles/turning-lists-into-trees/vline.png) no-repeat;
         }
+
         ul.tree li.last {
             background: #fff url(http://odyniec.net/articles/turning-lists-into-trees/lastnode.png) no-repeat;
         }
@@ -47,18 +56,22 @@
             var $inputs = $('#root_node_form input');
             $inputs.click(function () {
                 var $this = $(this);
+                if ($this.attr("readonly")) {
+                    return false;
+                }
                 var idx = $this.val();
                 $.post("/contextTree/rootNode/choseUpResult", {'chosenResult': idx},
                         function (result) {
-                            console.log(result);
+                            location.reload();
                         });
             });
-
-            $('#edit_root_btn').click(function () {
-                $inputs.removeAttr('disabled');
-                $(this).hide();
+            $(".ro_input").dblclick(function () {
+                $inputs.show();
+                $inputs.removeAttr('readonly');
+                $(".ro_input").hide();
+                $("#dblclick_message").hide();
             });
-        })
+        });
     </script>
 
 </head>

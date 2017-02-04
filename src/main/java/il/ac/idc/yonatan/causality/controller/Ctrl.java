@@ -6,10 +6,11 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.base.Splitter;
 import il.ac.idc.yonatan.causality.contexttree.ContextTreeManager;
 import il.ac.idc.yonatan.causality.contexttree.DownHitReviewData;
+import il.ac.idc.yonatan.causality.contexttree.DownPhaseManager;
 import il.ac.idc.yonatan.causality.contexttree.UpHitReviewData;
+import il.ac.idc.yonatan.causality.contexttree.UpPhaseManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,11 +33,21 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Ctrl {
 
-    @Autowired
     private ContextTreeManager contextTreeManager;
 
-    @Autowired
     private ObjectMapper objectMapper;
+
+    private UpPhaseManager upPhaseManager;
+
+    private DownPhaseManager downPhaseManager;
+
+    public Ctrl(ContextTreeManager contextTreeManager, ObjectMapper objectMapper, UpPhaseManager upPhaseManager,
+                DownPhaseManager downPhaseManager) {
+        this.contextTreeManager = contextTreeManager;
+        this.objectMapper = objectMapper;
+        this.upPhaseManager = upPhaseManager;
+        this.downPhaseManager = downPhaseManager;
+    }
 
     @GetMapping("contextTree")
     public String getContextTree(Model model) {
@@ -60,9 +71,10 @@ public class Ctrl {
     @PostMapping("contextTree/progressUp")
     public String progressUpHits(RedirectAttributes redir) throws IOException {
         log.info("Progressing up");
-        List<String> errors = contextTreeManager.canCreateHitsForUpPhase();
+        List<String> errors = upPhaseManager.canCreateHitsForUpPhase();
         if (errors.isEmpty()) {
-            contextTreeManager.createHitsForUpPhase();
+//            contextTreeManager.createHitsForUpPhase();
+            upPhaseManager.createHitsForUpPhase();
         } else {
             redir.addFlashAttribute("errors", errors);
         }
@@ -73,9 +85,11 @@ public class Ctrl {
     @PostMapping("contextTree/progressDown")
     public String progressDownHits(RedirectAttributes redir) throws IOException {
         log.info("Starting down phase");
-        List<String> errors = contextTreeManager.canCreateHitsForDownPhase();
+        List<String> errors = downPhaseManager.canCreateHitsForDownPhase();
+//        List<String> errors = contextTreeManager.canCreateHitsForDownPhase();
         if (errors.isEmpty()) {
-            contextTreeManager.createHitsForDownPhase();
+//            contextTreeManager.createHitsForDownPhase();
+            downPhaseManager.createHitsForDownPhase();
         } else {
             redir.addFlashAttribute("errors", errors);
         }
@@ -85,13 +99,15 @@ public class Ctrl {
 
     @PostMapping("contextTree/rootNode/choseUpResult")
     public ResponseEntity<Void> choseSummaryUpHitRootNode(@RequestParam("chosenResult") Integer chosenResult) throws IOException {
-        contextTreeManager.choseRootNodeUpHitSummary(chosenResult);
+        upPhaseManager.choseRootNodeUpHitSummary(chosenResult);
+//        contextTreeManager.choseRootNodeUpHitSummary(chosenResult);
         return ResponseEntity.ok(null);
     }
 
     @GetMapping("contextTree/reviewsUpPhase")
     public String reviewUpPhase(Model model) {
-        List<UpHitReviewData> hitsForReview = contextTreeManager.getUpPhaseHitsForReviews();
+        List<UpHitReviewData> hitsForReview = //contextTreeManager.getUpPhaseHitsForReviews();
+                upPhaseManager.getUpPhaseHitsForReviews();
         model.addAttribute("hitsForReview", hitsForReview);
         return "reviewUpHits";
     }
@@ -116,14 +132,14 @@ public class Ctrl {
             } else {
                 summary = null;
             }
-            contextTreeManager.handleUpPhaseReview(nodeId, hitId, summary, approved, reason, chosenChildrenSummaries);
+            upPhaseManager.handleUpPhaseReview(nodeId, hitId, summary, approved, reason, chosenChildrenSummaries);
         }
         return "redirect:/contextTree/reviewsUpPhase";
     }
 
     @GetMapping("contextTree/reviewsDownPhase")
-    public String reviewDownPhase(Model model){
-        List<DownHitReviewData> hitsForReview=contextTreeManager.getDownPhaseHitsForReview();
+    public String reviewDownPhase(Model model) {
+        List<DownHitReviewData> hitsForReview = downPhaseManager.getDownPhaseHitsForReview();
         model.addAttribute("hitsForReview", hitsForReview);
         return "reviewDownHits";
     }
@@ -141,7 +157,8 @@ public class Ctrl {
             String gradesStr = result.get(hitId + "_grades");
             List<Integer> grades = Splitter.on(",").trimResults().splitToList(gradesStr)
                     .stream().map(Integer::parseInt).collect(Collectors.toList());
-            contextTreeManager.handleDownPhaseReview(nodeId, hitId, approved, reason, grades);
+//            contextTreeManager.handleDownPhaseReview(nodeId, hitId, approved, reason, grades);
+            downPhaseManager.handleDownPhaseReview(nodeId, hitId, approved, reason, grades);
         }
         return "redirect:/contextTree/reviewsDownPhase";
     }
