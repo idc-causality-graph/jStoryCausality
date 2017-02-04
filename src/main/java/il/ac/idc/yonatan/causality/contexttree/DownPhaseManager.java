@@ -80,12 +80,26 @@ public class DownPhaseManager {
                     .allMatch(Node::isDownPhaseDone);
             if (isAllNodesDone) {
                 // down phase is done. we have a full context tree.
+                // now, normalize it!
+                Node rootNode = contextTree.getRootNode();
+                rootNode.setNormalizedImportanceScore(1.0);
+                normalizeNode(rootNode);
                 contextTree.setPhase(Phases.DONE);
             }
             contextTreeManager.save();
         }
         hitManager.submitDownHitReview(hitId, approved, reason);
 
+    }
+
+    private void normalizeNode(Node node){
+        List<Node> children = node.getChildren();
+        for (Node child : children) {
+            double childNormalizedImportanceScore =
+                    child.getNormAverageImportanceScore() * node.getNormalizedImportanceScore();
+            child.setNormalizedImportanceScore(childNormalizedImportanceScore);
+            normalizeNode(child);
+        }
     }
 
     public List<DownHitReviewData> getDownPhaseHitsForReview() {

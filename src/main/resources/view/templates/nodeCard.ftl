@@ -108,6 +108,14 @@
             </div>
         </#if>
     </#if>
+    <#if node.normalizedImportanceScore??>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Normalized importance score</label>
+            <div class="col-sm-10">
+                <p class="form-control-static">${node.normalizedImportanceScore?string["0.###"]}</p>
+            </div>
+        </div>
+    </#if>
 
     <#if !node.leaf>
         <div class="form-group row">

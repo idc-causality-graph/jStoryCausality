@@ -49,6 +49,12 @@ public class Node {
     private Set<String> completedDownHitIds = new HashSet<>();
 
     /**
+     * This is a normalized score of the scores the workers has given, with respect to the parent.
+     * That is, if the average score is 5.5, the normalized score here will be <code>(5.5-1)/6*parent.normalizedImportanceScore</code>
+     */
+    private Double normalizedImportanceScore;
+
+    /**
      * A list of texts describing the most important event of this node.
      * Each text is a text written by a unique worker in the down phase
      */
@@ -90,10 +96,19 @@ public class Node {
         return upHitIds.size() > 0 && upHitIds.size() == completedUpHitIds.size();
     }
 
+
+    /**
+     * This is the average [1-7] of the scores the workers has given
+      * @return
+     */
     public double getAverageImportanceScore() {
         return eventImportanceScores.stream().collect(Collectors.averagingInt(x -> x));
     }
 
+    /**
+     * This is a [0.0-1.0] scale of the average of the importance scores the workers has given
+     * @return
+     */
     public double getNormAverageImportanceScore() {
         return Math.max((getAverageImportanceScore() - 1) / 6, 0);
     }
