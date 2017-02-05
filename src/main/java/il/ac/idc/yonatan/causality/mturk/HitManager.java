@@ -21,4 +21,6 @@ public interface HitManager {
     void submitDownHitReview(String hitId, boolean hitApproved, String reason);
 
     String createDownHit(List<String> allRootSummaries, List<String> nodeSummaries, boolean isLeaf);
+
+    void reset();
 }

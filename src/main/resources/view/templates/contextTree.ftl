@@ -71,6 +71,12 @@
                 $(".ro_input").hide();
                 $("#dblclick_message").hide();
             });
+
+            $("#reset_btn").click(function(){
+                var result=confirm("This will delete your context tree (and mock hit storage)! Are you sure?");
+                return result;
+            });
+            $("#reset_btn").removeAttr("disabled");
         });
     </script>
 
@@ -94,13 +100,13 @@
     <nav class="navbar navbar-toggleable-md navbar-light bg-faded">
         <div class="collapse navbar-collapse" id="navbarText">
             <ui class="navbar-nav">
-                <li class="nav-item">
+                <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/contextTree/reviewsDownPhase">Review down HITs</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/contextTree/reviewsUpPhase">Review up HITs</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/hits">HIT Worker UI</a>
                 </li>
             </ui>
@@ -108,9 +114,7 @@
     </nav>
     <div class="btn-group sticky-top" role="group">
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-            <form action="/contextTree/save" method="post">
-                <button class="btn btn-info" type="submit">Save</button>
-            </form>
+
             <form action="/contextTree/progressUp" method="post">
                 <button class="btn btn-secondary" type="submit" ${(phase!='UP_PHASE')?then('disabled','')}>
                     Progress up hits
@@ -125,6 +129,10 @@
                 <button class="btn btn-secondary" type="submit">
                     Reload from disk
                 </button>
+            </form>
+            <span class="ml-4"/>
+            <form action="/contextTree/reset" method="post">
+                <button disabled id="reset_btn" class="btn btn-danger" type="submit">Reset</button>
             </form>
 
         </div>

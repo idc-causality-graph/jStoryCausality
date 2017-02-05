@@ -52,6 +52,10 @@ public class HitManagerImpl implements HitManager {
 
     }
 
+    public void reset(){
+        DB.delete();
+    }
+
     @SneakyThrows
     private HitStorage readDb() {
         if (!DB.exists()) {

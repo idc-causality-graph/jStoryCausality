@@ -53,6 +53,10 @@ public class ContextTreeManager {
         return contextTree;
     }
 
+    public void reset() throws IOException {
+        appConfig.getContextFile().delete();
+        init();
+    }
 
     @PostConstruct
     public void init() throws IOException {
@@ -63,6 +67,7 @@ public class ContextTreeManager {
             try (InputStream inputResource = resourceLoader.getResource(appConfig.getInputResource()).getInputStream()) {
                 initialize(inputResource);
             }
+            save();
         } else {
             log.info("Loading context file from {}", contextFile);
             try (InputStream is = new FileInputStream(contextFile)) {

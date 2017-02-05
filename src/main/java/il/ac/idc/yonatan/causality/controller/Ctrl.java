@@ -8,6 +8,7 @@ import il.ac.idc.yonatan.causality.contexttree.DownHitReviewData;
 import il.ac.idc.yonatan.causality.contexttree.DownPhaseManager;
 import il.ac.idc.yonatan.causality.contexttree.UpHitReviewData;
 import il.ac.idc.yonatan.causality.contexttree.UpPhaseManager;
+import il.ac.idc.yonatan.causality.mturk.HitManagerImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -41,12 +42,16 @@ public class Ctrl {
 
     private DownPhaseManager downPhaseManager;
 
+    //HitManagerImpl is here just to allow reset of the mock-hit-store
+    private HitManagerImpl hitManager;
+
     public Ctrl(ContextTreeManager contextTreeManager, ObjectMapper objectMapper, UpPhaseManager upPhaseManager,
-                DownPhaseManager downPhaseManager) {
+                DownPhaseManager downPhaseManager, HitManagerImpl hitManager) {
         this.contextTreeManager = contextTreeManager;
         this.objectMapper = objectMapper;
         this.upPhaseManager = upPhaseManager;
         this.downPhaseManager = downPhaseManager;
+        this.hitManager = hitManager;
     }
 
     @GetMapping("contextTree")
@@ -56,9 +61,10 @@ public class Ctrl {
         return "contextTree";
     }
 
-    @PostMapping("contextTree/save")
-    public String saveContextTree() throws IOException {
-        contextTreeManager.save();
+    @PostMapping("contextTree/reset")
+    public String resetEverything() throws IOException {
+        contextTreeManager.reset();
+        hitManager.reset();
         return "redirect:/contextTree";
     }
 
