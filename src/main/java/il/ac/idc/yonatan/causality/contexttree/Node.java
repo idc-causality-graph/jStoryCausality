@@ -49,6 +49,11 @@ public class Node {
     private Set<String> completedDownHitIds = new HashSet<>();
 
     /**
+     * Data related to constructing causalityGraph
+     */
+    private CausalityData causalityData=new CausalityData();
+
+    /**
      * This is a normalized score of the scores the workers has given, with respect to the parent.
      * That is, if the average score is 5.5, the normalized score here will be <code>(5.5-1)/6*parent.normalizedImportanceScore</code>
      */

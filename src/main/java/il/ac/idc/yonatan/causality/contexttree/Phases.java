@@ -6,5 +6,5 @@ package il.ac.idc.yonatan.causality.contexttree;
 public enum Phases {
     UP_PHASE,
     DOWN_PHASE,
-    DONE
+    CAUSALITY_GRAPH, DONE
 }

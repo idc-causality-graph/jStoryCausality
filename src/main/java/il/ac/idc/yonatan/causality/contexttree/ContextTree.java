@@ -19,12 +19,13 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
  * Created by ygraber on 1/28/17.
  */
 @Data
-@JsonAutoDetect(getterVisibility = NONE,setterVisibility = NONE,isGetterVisibility = NONE,fieldVisibility = ANY)
+@JsonAutoDetect(getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE, fieldVisibility = ANY)
 public class ContextTree {
 
     public ContextTree() {
         Node.contextTree = this;
         NodeLevel.contextTree = this;
+        CausalityData.contextTree = this;
     }
 
     private String rootNodeId;
@@ -34,8 +35,11 @@ public class ContextTree {
     private Map<String, Node> nodeRepository = new HashMap<>();
     @Setter(AccessLevel.NONE)
     private LinkedList<NodeLevel> nodeLevels = new LinkedList<>();
+    @Setter(AccessLevel.NONE)
+    private List<NodeLevel> prunedNodeLevels = new ArrayList<>();
     private int upLevelStep;
     private Phases phase;
+    private int causlityLevelStep;
 
     public Node getNode(String nodeId) {
         return nodeRepository.get(nodeId);
@@ -47,6 +51,13 @@ public class ContextTree {
 
     public Collection<Node> getAllNodes() {
         return getNodeRepository().values();
+    }
+
+    public NodeLevel getPrunedLeafNodeLevel() {
+        if (prunedNodeLevels.isEmpty()) {
+            return null;
+        }
+        return prunedNodeLevels.get(prunedNodeLevels.size() - 1);
     }
 
 

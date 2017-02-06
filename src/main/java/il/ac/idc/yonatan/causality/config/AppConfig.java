@@ -3,9 +3,12 @@ package il.ac.idc.yonatan.causality.config;
 import lombok.Data;
 import lombok.ToString;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.File;
@@ -40,4 +43,9 @@ public class AppConfig {
 
     @Min(1)
     private int replicationFactor;
+
+    private double importanceThreshold;
+
+    @Min(1)
+    private int causalityReplicaFactor;
 }
