@@ -27,7 +27,7 @@
                 <a class="p-2 btn btn-info" href="">Reload</a>
             </div>
         </div>
-    <#list hitsForReview as hitForReview>
+    <#list hitsForReview?sort_by('hitDone')?reverse as hitForReview>
         <div>
             <div class="card mb-2">
                 <div class="card-header ${hitForReview.hitDone?then('card-primary card-inverse','')}">

@@ -19,12 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by ygraber on 2/4/17.
- */
 @Service
 @Slf4j
-public class UpPhaseManager {
+public class UpPhaseManager implements PhaseManager {
     private ContextTreeManager contextTreeManager;
 
     private AppConfig appConfig;
@@ -42,10 +39,11 @@ public class UpPhaseManager {
         this.objectMapper = objectMapper;
     }
 
-    public List<String> canCreateHitsForUpPhase() {
+    public List<String> canCreateHits() {
 
+        ContextTree contextTree = contextTreeManager.getContextTree();
         List<String> errors = new ArrayList<>();
-        Phases phase = contextTreeManager.getPhase();
+        Phases phase = contextTree.getPhase();
         if (phase != Phases.UP_PHASE) {
             errors.add("Tree in phase " + phase);
             return errors;
@@ -65,7 +63,7 @@ public class UpPhaseManager {
         return errors;
     }
 
-    public void createHitsForUpPhase() throws IOException {
+    public void createHits() throws IOException {
         NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
         if (nodeLevel == null) {
             log.warn("Trying to create hits on root node");

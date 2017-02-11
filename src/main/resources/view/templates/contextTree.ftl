@@ -101,10 +101,13 @@
         <div class="collapse navbar-collapse" id="navbarText">
             <ui class="navbar-nav">
                 <li class="nav-item active">
+                    <a class="nav-link" target="_blank" href="/contextTree/reviewsUpPhase">Review up HITs</a>
+                </li>
+                <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/contextTree/reviewsDownPhase">Review down HITs</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" target="_blank" href="/contextTree/reviewsUpPhase">Review up HITs</a>
+                    <a class="nav-link" target="_blank" href="/contextTree/reviewsCausalityPhase">Review causality HITs</a>
                 </li>
                 <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/hits">HIT Worker UI</a>
@@ -125,12 +128,12 @@
                         type="submit" ${(phase!='DOWN_PHASE')?then('disabled','')}>Progress down hits
                 </button>
             </form>
-            <form action="/contextTree/reload" method="post">
-                <button class="btn btn-secondary" type="submit">
-                    Reload from disk
+            <form action="/contextTree/progressCausality" method="post">
+                <button class="btn btn-secondary"
+                        type="submit" ${(phase!='CAUSALITY_PHASE')?then('disabled','')}>Progress causality hits
                 </button>
             </form>
-            <span class="ml-4"/>
+            <span class="ml-4">&nbsp;</span>
             <form action="/contextTree/reset" method="post">
                 <button disabled id="reset_btn" class="btn btn-danger" type="submit">Reset</button>
             </form>
@@ -139,6 +142,16 @@
     </div>
     <div>&nbsp;</div>
 ${htmlTree}
+    <br>
+    <label>Causality HITs:</label>
+    <div>
+    <#list causalityHitIds as causalityHitId>
+        <span class="<#if completedCausalityHitIds?seq_contains(causalityHitId)>hit_id_done</#if>">
+        ${causalityHitId}
+        </span>
+        <#sep><span>,  </span></#sep>
+    </#list>
+    </div>
 </div>
 </body>
 </html>

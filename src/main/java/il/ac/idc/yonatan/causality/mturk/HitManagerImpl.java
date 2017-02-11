@@ -1,13 +1,21 @@
 package il.ac.idc.yonatan.causality.mturk;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
+import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
+import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -26,16 +34,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-/**
- * Created by ygraber on 1/28/17.
- */
+import static java.util.stream.Collectors.toSet;
+
 @Service
 @Controller
 @Slf4j
@@ -43,16 +50,21 @@ public class HitManagerImpl implements HitManager {
 
     private static final File DB = new File("./hit-storage.json");
 
-    @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    public HitManagerImpl(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @PostConstruct
     public void init() {
+        HashFunction hf = Hashing.murmur3_32();
         log.info("Using mock db in {}", DB);
 
     }
 
-    public void reset(){
+    public void reset() {
         DB.delete();
     }
 
@@ -78,6 +90,18 @@ public class HitManagerImpl implements HitManager {
     public static class HitStorage {
         private Map<String, UpHitResultStorage> upHits = new HashMap<>();
         private Map<String, DownHitResultStorage> downHits = new HashMap<>();
+        private Map<String, CausalityResultStorage> causalityHits = new HashMap<>();
+    }
+
+    @Data
+    @AllArgsConstructor()
+    @NoArgsConstructor
+    public static class CausalityResultStorage {
+        @Setter(AccessLevel.NONE)
+        private List<CausalityQuestion> causalityQuestions = new ArrayList<>();
+        private String globalSummary;
+        @Setter(AccessLevel.NONE)
+        private CausalityHitResult causalityHitResult;
     }
 
     @Data
@@ -107,6 +131,36 @@ public class HitManagerImpl implements HitManager {
         hitStorage.getUpHits().put(hitId, upHitResultStorage);
         saveDb(hitStorage);
         return hitId;
+    }
+
+    @Override
+    public String createCausalityHit(String globalSummary, List<CausalityQuestion> causalityHitQuestions) {
+        // This will:
+        //present the global summary first
+        //than will ask all questions in hit question (in real world - twice, and random causes order)
+        HitStorage db = readDb();
+        String hitId = "C_HIT-" + RandomStringUtils.randomAlphanumeric(8);
+        CausalityResultStorage crs = new CausalityResultStorage(causalityHitQuestions, globalSummary, new CausalityHitResult());
+        db.getCausalityHits().put(hitId, crs);
+        saveDb(db);
+        return hitId;
+    }
+
+    @Override
+    public void submitCausalityHitReview(String hitId, boolean hitApproved, String reason) {
+        HitStorage db = readDb();
+        if (hitApproved) {
+            db.getCausalityHits().remove(hitId);
+        } else {
+            CausalityHitResult causalityHitResult = db.getCausalityHits().get(hitId).getCausalityHitResult();
+            causalityHitResult.setHitDone(false);
+            causalityHitResult.getCauseAndAffects().clear();
+        }
+        saveDb(db);
+    }
+
+    public CausalityHitResult getCausalityHitForReview(String hitId) {
+        return readDb().getCausalityHits().get(hitId).getCausalityHitResult();
     }
 
 
@@ -170,7 +224,7 @@ public class HitManagerImpl implements HitManager {
 
         processUpHits(hitStorage, result);
         processDownHits(hitStorage, result);
-        System.out.println(result);
+        processCausalityHits(hitStorage, result);
         saveDb(hitStorage);
         return "redirect:/hits";
     }
@@ -178,7 +232,7 @@ public class HitManagerImpl implements HitManager {
     private void processUpHits(HitStorage hitStorage, @RequestParam Map<String, String> result) {
         Set<String> hitIds = result.keySet().stream().filter(x -> x.endsWith("_hitsummary"))
                 .map(x -> StringUtils.substringBeforeLast(x, "_hitsummary"))
-                .collect(Collectors.toSet());
+                .collect(toSet());
 
         for (String hitId : hitIds) {
             UpHitResultStorage upHitResultStorage = hitStorage.getUpHits().get(hitId);
@@ -210,7 +264,7 @@ public class HitManagerImpl implements HitManager {
                 .filter(x -> x.startsWith("DOWN_"))
                 .map(s -> StringUtils.substringAfter(s, "DOWN_"))
                 .map(s -> StringUtils.substringBeforeLast(s, "_"))
-                .collect(Collectors.toSet());
+                .collect(toSet());
 
         for (String hitId : hitIds) {
             DownHitResultStorage downHitResultStorage = hitStorage.getDownHits().get(hitId);
@@ -224,5 +278,37 @@ public class HitManagerImpl implements HitManager {
             }
         }
     }
+
+    private void processCausalityHits(HitStorage hitStorage, Map<String, String> result) {
+        Set<String> causalityInputs = result.keySet().stream()
+                .filter(x -> x.startsWith("CAUS_"))
+                .collect(toSet());
+
+        for (String causalityInputId : causalityInputs) {
+            String hitId = StringUtils.substringBefore(
+                    StringUtils.substringAfter(causalityInputId, "CAUS_"),
+                    ":");
+            log.debug("Processing causality hit {}", hitId);
+            CausalityResultStorage causalityResultStorage = hitStorage.getCausalityHits().get(hitId);
+            String response = result.get(causalityInputId);
+            boolean causality = BooleanUtils.toBoolean(response);
+
+            String causeAndAffectIds = StringUtils.substringAfter(causalityInputId, ":");
+            String queryNodeID = StringUtils.substringBefore(causeAndAffectIds, ":");
+            String causeId = StringUtils.substringAfter(causeAndAffectIds, ":");
+            CauseAndAffect causeAndAffect = new CauseAndAffect(causeId, queryNodeID);
+            CausalityHitResult causalityHitResult = causalityResultStorage.getCausalityHitResult();
+            if (causality) {
+                log.debug("Adding cause {}", causeAndAffect);
+                causalityHitResult.getCauseAndAffects().add(causeAndAffect);
+            } else {
+                log.debug("Adding noncause {}", causeAndAffect);
+                causalityHitResult.getNonCauseAndAffects().add(causeAndAffect);
+            }
+            causalityHitResult.setHitDone(true);
+        }
+        saveDb(hitStorage);
+    }
+
 
 }

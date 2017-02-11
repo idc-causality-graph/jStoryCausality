@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import freemarker.template.Configuration;
 import il.ac.idc.yonatan.causality.config.AppConfig;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -20,12 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Collection;
 import java.util.List;
-
-/**
- * Created by ygraber on 1/28/17.
- */
 
 @Service
 @Slf4j
@@ -49,7 +45,9 @@ public class ContextTreeManager {
         this.resourceLoader = resourceLoader;
     }
 
+    @SneakyThrows
     public ContextTree getContextTree() {
+        init();
         return contextTree;
     }
 
@@ -69,7 +67,7 @@ public class ContextTreeManager {
             }
             save();
         } else {
-            log.info("Loading context file from {}", contextFile);
+            log.debug("Loading context file from {}", contextFile);
             try (InputStream is = new FileInputStream(contextFile)) {
                 contextTree = objectMapper.readValue(is, ContextTree.class);
             }
@@ -157,11 +155,4 @@ public class ContextTreeManager {
         return node;
     }
 
-    public void reload() throws IOException {
-        init();
-    }
-
-    public Phases getPhase() {
-        return contextTree.getPhase();
-    }
 }

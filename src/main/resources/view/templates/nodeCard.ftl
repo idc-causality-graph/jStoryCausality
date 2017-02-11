@@ -128,22 +128,18 @@
         </div>
     </#if>
 
-    <#--<b>up phase done?</b>&nbsp;true<br>-->
-    <#--<b>Down phase done?</b>&nbsp;false<br>-->
-    <#--<b>Up HIT ids:</b>&nbsp;[HIT-qObho0uS, HIT-Ufb2zU1O, HIT-ipWceiZb, HIT-mnyd67rl]<br>-->
-    <#--<b>Completed Up HIT ids:</b>&nbsp;[HIT-mnyd67rl, HIT-ipWceiZb, HIT-Ufb2zU1O, HIT-qObho0uS]<br>-->
-    <#--<b>Down HIT ids:</b>&nbsp;[HIT_D-C4Ncubd9, HIT_D-acJKxwW5, HIT_D-J9yStMUF, HIT_D-YyUz293I]<br>-->
-    <#--<b>Completed Up HIT ids:</b>&nbsp;[]<br>-->
-    <#--<b>Down phase rates:</b>&nbsp;[]<br>-->
-    <#--<b>Average rate:</b>&nbsp;0.0<br><b>Norm average rate:&nbsp;0.00</b><br>-->
-    <#--<b><u>Summary #1</u>:</b>&nbsp;d<br>-->
-    <#--<b>Summary-->
-    <#--#2:</b>&nbsp;c<br>-->
-    <#--<b>Summary #3:</b>&nbsp;b<br>-->
-    <#--<b>Summary #4:</b>&nbsp;a<br>-->
-    <#--<b>Children:</b>&nbsp;-->
-    <#--<a href="#Yw00mTzR8T7b">Yw00mTzR8T7b</a>&nbsp;-->
-    <#--<a href="#bybXUpfLDXQQ">bybXUpfLDXQQ</a>&nbsp;-->
-    <#--<a href="#mTcE85oxciMe">mTcE85oxciMe</a>&nbsp;-->
+    <#if (node.causalityData.targetNodeIdEntrySet?size>0)>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">This node causes:</label>
+            <div class="col-sm-10">
+                <p class="form-control-static">
+                    <#list node.causalityData.targetNodeIdEntrySet as entry>
+                        <a href="#${entry.element}">${entry.element}</a> (${entry.count})
+                        <#sep >,&nbsp;
+                    </#list>
+                </p>
+            </div>
+        </div>
+    </#if>
     </div>
 </div>

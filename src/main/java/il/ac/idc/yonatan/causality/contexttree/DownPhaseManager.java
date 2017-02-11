@@ -14,24 +14,25 @@ import java.util.Set;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-/**
- * Created by ygraber on 2/4/17.
- */
 @Service
-public class DownPhaseManager {
+public class DownPhaseManager implements PhaseManager{
     private ContextTreeManager contextTreeManager;
 
     private AppConfig appConfig;
 
+    private CausalityPhaseManager causalityPhaseManager;
+
     private HitManager hitManager;
 
-    public DownPhaseManager(AppConfig appConfig, ContextTreeManager contextTreeManager, HitManager hitManager) {
+    public DownPhaseManager(AppConfig appConfig, ContextTreeManager contextTreeManager,
+                            CausalityPhaseManager causalityPhaseManager, HitManager hitManager) {
         this.appConfig = appConfig;
         this.hitManager = hitManager;
         this.contextTreeManager = contextTreeManager;
+        this.causalityPhaseManager=causalityPhaseManager;
     }
 
-    public List<String> canCreateHitsForDownPhase() {
+    public List<String> canCreateHits() {
         ContextTree contextTree = contextTreeManager.getContextTree();
         Phases phase = contextTree.getPhase();
         if (phase != Phases.DOWN_PHASE) {
@@ -44,7 +45,7 @@ public class DownPhaseManager {
         return Collections.emptyList();
     }
 
-    public void createHitsForDownPhase() throws IOException {
+    public void createHits() throws IOException {
         ContextTree contextTree = contextTreeManager.getContextTree();
         Node rootNode = contextTree.getRootNode();
         List<String> allRootSummaries = rootNode.getSummaries();
@@ -84,7 +85,8 @@ public class DownPhaseManager {
                 Node rootNode = contextTree.getRootNode();
                 rootNode.setNormalizedImportanceScore(1.0);
                 normalizeNode(rootNode);
-                contextTree.setPhase(Phases.DONE);
+                contextTree.setPhase(Phases.CAUSALITY_PHASE);
+                causalityPhaseManager.initCausalityGraph();
             }
             contextTreeManager.save();
         }

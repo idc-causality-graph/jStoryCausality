@@ -30,6 +30,7 @@
                               name="${hitId}_hitsummary">${upHit.upHitResult.hitSummary!""}</textarea>
                 </div>
 
+                <label>Choose best summary</label>
                 <#list upHit.childIdToSummaries as childId,summaries>
                     <div class="card mb-1">
                         <div class="card-header">
@@ -99,6 +100,40 @@
                 </div>
             </div>
         </div>
+    </#list>
+
+    <#list hitStorage.causalityHits as hitId, causalityHit>
+        <div class="card mb-5">
+            <div class="card-header card-${causalityHit.causalityHitResult.hitDone?then('secondary','primary card-inverse')} ">
+                HIT Id ${hitId}
+            </div>
+            <div class="card-block">
+                <label>Root node summaries</label>
+                <div>${causalityHit.globalSummary}</div>
+                <#list causalityHit.causalityQuestions as causalityQuestion>
+                    <#assign questionNodeId=causalityQuestion.questionNodeId>
+                    <div class="form-group row">
+                        <label class="col-form-label col-sm-2">Event</label>
+                        <span class="form-control-static col-10">${causalityQuestion.question}</span>
+                    </div>
+
+                    <label>Causes: (${causalityQuestion.causes?size}) check all that apply</label>
+                    <ul>
+                        <#list causalityQuestion.causes as cause>
+                            <li>
+                                <label>
+                                    <input type="checkbox"
+                                           ${causalityHit.causalityHitResult.causeNodeIds?seq_contains(questionNodeId+':'+cause.nodeId)?then('checked','')}
+                                           name="CAUS_${hitId}:${questionNodeId}:${cause.nodeId}">
+                                ${cause.text}
+                                </label>
+                            </li>
+                        </#list>
+                    </ul>
+                </#list>
+            </div>
+        </div>
+
     </#list>
     </form>
 </div>

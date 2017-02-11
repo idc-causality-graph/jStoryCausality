@@ -27,17 +27,34 @@
             <a class="p-2 btn btn-info" href="">Reload</a>
         </div>
     </div>
-<#list hitsForReview as hitForReview>
+<#list hitsForReview?sort_by('hitDone')?reverse as hitForReview>
     <div>
         <div class="card mb-2">
             <div class="card-header ${hitForReview.hitDone?then('card-primary card-inverse','')}">
                 HitId: ${hitForReview.hitId}
             </div>
             <div class="card-block">
-            Is done? ${hitForReview.hitDone?c}<br>
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label">Is done?</label>
+                    <div class="col-sm-9">
+                        <span class="form-control-static">${hitForReview.hitDone?c}</span>
+                    </div>
+                </div>
+
             <#if hitForReview.hitDone>
-                Task text: ${hitForReview.taskText}<br>
-                Summary: ${hitForReview.summary}<br>
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label">Task text</label>
+                    <div class="col-sm-9">
+                        <span class="form-control-static">${hitForReview.taskText}</span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label">Summary</label>
+                    <div class="col-sm-9">
+                        <span class="form-control-static">${hitForReview.summary}</span>
+                    </div>
+                </div>
+            <div class="col-sm-9">
                 Approve:
                 <label><input type="radio" name="${hitForReview.hitId}_approve" value="1"
                               data-hitid="${hitForReview.hitId}"> Yes</label>
