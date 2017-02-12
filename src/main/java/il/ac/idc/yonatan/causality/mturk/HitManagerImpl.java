@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,6 +284,7 @@ public class HitManagerImpl implements HitManager {
         Set<String> causalityInputs = result.keySet().stream()
                 .filter(x -> x.startsWith("CAUS_"))
                 .collect(toSet());
+        Set<String> resetHits = new HashSet<>();
 
         for (String causalityInputId : causalityInputs) {
             String hitId = StringUtils.substringBefore(
@@ -290,6 +292,7 @@ public class HitManagerImpl implements HitManager {
                     ":");
             log.debug("Processing causality hit {}", hitId);
             CausalityResultStorage causalityResultStorage = hitStorage.getCausalityHits().get(hitId);
+
             String response = result.get(causalityInputId);
             boolean causality = BooleanUtils.toBoolean(response);
 
@@ -298,6 +301,12 @@ public class HitManagerImpl implements HitManager {
             String causeId = StringUtils.substringAfter(causeAndAffectIds, ":");
             CauseAndAffect causeAndAffect = new CauseAndAffect(causeId, queryNodeID);
             CausalityHitResult causalityHitResult = causalityResultStorage.getCausalityHitResult();
+            if (!resetHits.contains(hitId)){
+                // Clear the hit result before re-save it
+                causalityHitResult.getCauseAndAffects().clear();
+                causalityHitResult.getNonCauseAndAffects().clear();
+                resetHits.add(hitId);
+            }
             if (causality) {
                 log.debug("Adding cause {}", causeAndAffect);
                 causalityHitResult.getCauseAndAffects().add(causeAndAffect);

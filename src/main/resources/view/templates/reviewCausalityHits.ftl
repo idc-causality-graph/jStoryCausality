@@ -16,6 +16,11 @@
             });
         });
     </script>
+    <style>
+        input[type=checkbox][disabled]:checked{
+            outline:2px solid red;
+        }
+    </style>
 </head>
 <body>
 <div class="container-fluid">
@@ -88,7 +93,7 @@
                         </div>
                     </div>
 
-                    <input type="text" name="${hitForReview.hitId}_pairs" value="${hiddenInput?join(';')}">
+                    <input type="hidden" name="${hitForReview.hitId}_pairs" value="${hiddenInput?join(';')}">
                 </#if>
             </div>
         </div>

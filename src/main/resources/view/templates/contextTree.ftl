@@ -72,8 +72,8 @@
                 $("#dblclick_message").hide();
             });
 
-            $("#reset_btn").click(function(){
-                var result=confirm("This will delete your context tree (and mock hit storage)! Are you sure?");
+            $("#reset_btn").click(function () {
+                var result = confirm("This will delete your context tree (and mock hit storage)! Are you sure?");
                 return result;
             });
             $("#reset_btn").removeAttr("disabled");
@@ -107,7 +107,8 @@
                     <a class="nav-link" target="_blank" href="/contextTree/reviewsDownPhase">Review down HITs</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" target="_blank" href="/contextTree/reviewsCausalityPhase">Review causality HITs</a>
+                    <a class="nav-link" target="_blank" href="/contextTree/reviewsCausalityPhase">Review causality
+                        HITs</a>
                 </li>
                 <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/hits">HIT Worker UI</a>
@@ -140,6 +141,7 @@
 
         </div>
     </div>
+<#if phase=='DONE'><h1>Stick a fork in me, I'm done.</h1></#if>
     <div>&nbsp;</div>
 ${htmlTree}
     <br>

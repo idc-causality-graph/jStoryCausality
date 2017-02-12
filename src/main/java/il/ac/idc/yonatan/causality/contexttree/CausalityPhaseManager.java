@@ -127,7 +127,18 @@ public class CausalityPhaseManager implements PhaseManager {
 
         for (Node queryNode : queryNodes) {
             List<Node> causalityNodesToCheck = new ArrayList<>();
+            int queryNodeIdx = queryNode.getLeftmostLeafIndex();
             for (Node potCausalityNode : potCausalityNodeLevel.getNodes()) {
+                if (potCausalityNode == queryNode) {
+                    // no need to query about myself
+                    continue;
+                }
+                if (potCausalityNode.getLeftmostLeafIndex() > queryNodeIdx) {
+                    // The earliest child happens after the query node happens.
+                    // So None of my children can affectively be the cause for the
+                    // query node. Skip it.
+                    continue;
+                }
                 Node parent = potCausalityNode.getParent();
                 if (parent != null) {
                     CausalityData parentCausalityData = parent.getCausalityData();
@@ -138,8 +149,10 @@ public class CausalityPhaseManager implements PhaseManager {
                 }
                 causalityNodesToCheck.add(potCausalityNode);
             }
-            Pair<Node, List<Node>> queryNodeToPotentialCauseNodes = Pair.of(queryNode, causalityNodesToCheck);
-            allQueryNodeToPotentialCauseNodes.add(queryNodeToPotentialCauseNodes);
+            if (!causalityNodesToCheck.isEmpty()) {
+                Pair<Node, List<Node>> queryNodeToPotentialCauseNodes = Pair.of(queryNode, causalityNodesToCheck);
+                allQueryNodeToPotentialCauseNodes.add(queryNodeToPotentialCauseNodes);
+            }
         }
 
         List<List<Pair<Node, List<Node>>>> partitionedQueryToPotCauses =
@@ -225,6 +238,10 @@ public class CausalityPhaseManager implements PhaseManager {
                 causeNode.getCausalityData().getTargetNodeIds().add(queryNodeId);
             }
             contextTree.getCompletedCausalityHits().add(hitId);
+            if (contextTree.getCausalityLevelStep() == 0 && contextTree.getUncompletedCausalityHits().isEmpty()) {
+                // Finished last HIT in the leaf level
+                contextTree.setPhase(Phases.DONE);
+            }
             contextTreeManager.save();
         }
         hitManager.submitCausalityHitReview(hitId, approved, reason);

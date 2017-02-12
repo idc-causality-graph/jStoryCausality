@@ -6,12 +6,19 @@
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
     <script src="/js/jquery-3.1.1.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
+    <script type="application/javascript">
+        $(function(){
+           $("#theform").submit(function(){
+               $("input[name*='CAUS_'][type='checkbox']:checked").prev().attr('disabled',true);
+           });
+        });
+    </script>
 </head>
 <body>
 <div class="container-fluid">
 
     <h1>HITs Worker UI</h1>
-    <form action="/hits" method="post">
+    <form id="theform" action="/hits" method="post">
         <div class="sticky-top">
             <div class="d-flex flex-row">
                 <button class="p-2 btn btn-info" type="submit">Save</button>
@@ -122,9 +129,11 @@
                         <#list causalityQuestion.causes as cause>
                             <li>
                                 <label>
+                                    <#assign inputName='CAUS_'+hitId+':'+questionNodeId+':'+cause.nodeId>
+                                    <input type="hidden" value="off" name="${inputName}">
                                     <input type="checkbox"
                                            ${causalityHit.causalityHitResult.causeNodeIds?seq_contains(questionNodeId+':'+cause.nodeId)?then('checked','')}
-                                           name="CAUS_${hitId}:${questionNodeId}:${cause.nodeId}">
+                                           name="${inputName}">
                                 ${cause.text}
                                 </label>
                             </li>

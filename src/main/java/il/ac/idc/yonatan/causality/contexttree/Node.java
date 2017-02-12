@@ -51,7 +51,7 @@ public class Node {
     /**
      * Data related to constructing causalityGraph
      */
-    private CausalityData causalityData=new CausalityData();
+    private CausalityData causalityData = new CausalityData();
 
     /**
      * This is a normalized score of the scores the workers has given, with respect to the parent.
@@ -80,7 +80,7 @@ public class Node {
 
     public boolean isDownPhaseDone() {
         //No down phase for root.
-        return parentNodeId==null || (downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
+        return parentNodeId == null || (downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
     }
 
     private List<String> childIds = new ArrayList<>();
@@ -104,7 +104,8 @@ public class Node {
 
     /**
      * This is the average [1-7] of the scores the workers has given
-      * @return
+     *
+     * @return
      */
     public double getAverageImportanceScore() {
         return eventImportanceScores.stream().collect(Collectors.averagingInt(x -> x));
@@ -112,6 +113,7 @@ public class Node {
 
     /**
      * This is a [0.0-1.0] scale of the average of the importance scores the workers has given
+     *
      * @return
      */
     public double getNormAverageImportanceScore() {
@@ -127,13 +129,13 @@ public class Node {
      */
     public String getBestSummary() {
         Integer vote = getBestSummaryIdx();
-        if (vote==null){
+        if (vote == null) {
             return null;
         }
         return summaries.get(vote);
     }
 
-    public Integer getBestSummaryIdx(){
+    public Integer getBestSummaryIdx() {
         if (bestSummaryVotes.isEmpty()) {
             return null;
         }
@@ -141,5 +143,13 @@ public class Node {
                 .iterator().next();
     }
 
+    public int getLeftmostLeafIndex() {
+        if (isLeaf()) {
+            return contextTree.getLeafNodeLevel().getNodes().indexOf(this);
+        } else {
+            return getChildren().get(0).getLeftmostLeafIndex();
+        }
+
+    }
 
 }
