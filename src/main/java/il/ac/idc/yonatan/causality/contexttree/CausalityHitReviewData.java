@@ -16,6 +16,8 @@ public class CausalityHitReviewData {
 
     private String hitId;
     private boolean hitDone;
+    // Is the answers the worker replayed are consistent with each other
+    private boolean consistentAnswers;
 
     @Setter(AccessLevel.NONE)
     private List<CausalityData> causalityDataList = new ArrayList<>();

@@ -286,6 +286,7 @@ public class HitManagerImpl implements HitManager {
                 .collect(toSet());
         Set<String> resetHits = new HashSet<>();
 
+        Set<String> seenQueryNodeIds = new HashSet<>();
         for (String causalityInputId : causalityInputs) {
             String hitId = StringUtils.substringBefore(
                     StringUtils.substringAfter(causalityInputId, "CAUS_"),
@@ -297,9 +298,10 @@ public class HitManagerImpl implements HitManager {
             boolean causality = BooleanUtils.toBoolean(response);
 
             String causeAndAffectIds = StringUtils.substringAfter(causalityInputId, ":");
-            String queryNodeID = StringUtils.substringBefore(causeAndAffectIds, ":");
+            String queryNodeId = StringUtils.substringBefore(causeAndAffectIds, ":");
+
             String causeId = StringUtils.substringAfter(causeAndAffectIds, ":");
-            CauseAndAffect causeAndAffect = new CauseAndAffect(causeId, queryNodeID);
+            CauseAndAffect causeAndAffect = new CauseAndAffect(causeId, queryNodeId);
             CausalityHitResult causalityHitResult = causalityResultStorage.getCausalityHitResult();
             if (!resetHits.contains(hitId)){
                 // Clear the hit result before re-save it

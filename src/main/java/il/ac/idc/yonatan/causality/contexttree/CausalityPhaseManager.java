@@ -9,6 +9,7 @@ import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
 import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,9 @@ import org.springframework.util.CollectionUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -172,18 +175,32 @@ public class CausalityPhaseManager implements PhaseManager {
 
     private List<CausalityQuestion> createCausalityHitQuestions(List<Pair<Node, List<Node>>> questionsData) {
         List<CausalityQuestion> causalityQuestions = new ArrayList<>();
-        for (Pair<Node, List<Node>> questionData : questionsData) {
+        List<Pair<Node, List<Node>>> clonedQuestionsData = new ArrayList<>(questionsData);
+        clonedQuestionsData.addAll(questionsData); // Ask each question twice
+        Set<String> seenQueryNodeId = new HashSet<>();
+        for (Pair<Node, List<Node>> questionData : clonedQuestionsData) {
             Node queryNode = questionData.getLeft();
             String question = queryNode.getBestSummary();
             String questionNodeId = queryNode.getId();
+
+            if (!seenQueryNodeId.contains(questionNodeId)) {
+                // if this is the first time this query node added
+                seenQueryNodeId.add(questionNodeId);
+                questionNodeId += "_0";
+            } else {
+                questionNodeId += "_1";
+            }
 
             List<Node> causeNodes = questionData.getRight();
             List<CausalityQuestion.CauseAndNodeId> causes =
                     causeNodes.stream()
                             .map(node -> new CausalityQuestion.CauseAndNodeId(node.getBestSummary(), node.getId()))
                             .collect(toList());
+            Collections.shuffle(causes); // random order for answers
             causalityQuestions.add(new CausalityQuestion(question, causes, questionNodeId));
         }
+        Collections.shuffle(causalityQuestions); // Ask questions in a random order
+
         return causalityQuestions;
     }
 
@@ -211,17 +228,26 @@ public class CausalityPhaseManager implements PhaseManager {
             CausalityHitResult causalityHitResult = hitManager.getCausalityHitForReview(uncompletedCausalityHit);
             causalityHitReviewData.setHitDone(causalityHitResult.isHitDone());
             causalityHitReviewData.setHitId(uncompletedCausalityHit);
+
+            // The assumption is that the node ID contains a version (i.e. 1234_0 or 1234_1 for nodeid 1234)
+            // and both appear in the cause or noncause
             Multimap<String, String> queryToCauses = queryToCausesNodeIds(causalityHitResult.getCauseAndAffects());
             Multimap<String, String> queryToNonCauses = queryToCausesNodeIds(causalityHitResult.getNonCauseAndAffects());
 
-            Map<String, CausalityHitReviewData.CausalityData> queryNodeIdToCausalityData = new HashMap<>();
-            List<CausalityHitReviewData.CausalityData> resultCauses =
-                    convertToCausalityData(contextTree, queryToCauses, queryNodeIdToCausalityData, true);
-            List<CausalityHitReviewData.CausalityData> resultNonCauses =
-                    convertToCausalityData(contextTree, queryToNonCauses, queryNodeIdToCausalityData, false);
+            // If queryToCause / queryToNonCause return null, there's a conflict in the answer, and should be rejected
+            if (queryToCauses == null || queryToNonCauses == null) {
+                causalityHitReviewData.setConsistentAnswers(false);
+            } else {
+                causalityHitReviewData.setConsistentAnswers(true);
+                Map<String, CausalityHitReviewData.CausalityData> queryNodeIdToCausalityData = new HashMap<>();
+                List<CausalityHitReviewData.CausalityData> resultCauses =
+                        convertToCausalityData(contextTree, queryToCauses, queryNodeIdToCausalityData, true);
+                List<CausalityHitReviewData.CausalityData> resultNonCauses =
+                        convertToCausalityData(contextTree, queryToNonCauses, queryNodeIdToCausalityData, false);
 
-            causalityHitReviewData.getCausalityDataList().addAll(resultCauses);
-            causalityHitReviewData.getCausalityDataList().addAll(resultNonCauses);
+                causalityHitReviewData.getCausalityDataList().addAll(resultCauses);
+                causalityHitReviewData.getCausalityDataList().addAll(resultNonCauses);
+            }
             causalityHitReviewDataList.add(causalityHitReviewData);
         }
         return causalityHitReviewDataList;
@@ -247,6 +273,13 @@ public class CausalityPhaseManager implements PhaseManager {
         hitManager.submitCausalityHitReview(hitId, approved, reason);
     }
 
+    /**
+     * This return a multimap without the version qualifier (1234_0 -> 1234), if consistent.
+     * If not consistent, returns null
+     *
+     * @param causeAndAffects
+     * @return
+     */
     private Multimap<String, String> queryToCausesNodeIds(Set<CauseAndAffect> causeAndAffects) {
         HashMultimap<String, String> mmap = HashMultimap.create();
         for (CauseAndAffect causeAndAffect : causeAndAffects) {
@@ -254,7 +287,23 @@ public class CausalityPhaseManager implements PhaseManager {
             String causeNodeId = causeAndAffect.getCauseNodeId();
             mmap.put(queryNodeId, causeNodeId);
         }
-        return mmap;
+        HashMultimap<String, String> response = HashMultimap.create();
+        for (String key : mmap.keySet()) {
+            String nodeId = StringUtils.substringBefore(key, "_");
+            String ver = StringUtils.substringAfter(key, "_"); //first or second version of the answer?
+            Set<String> value = mmap.get(nodeId + "_" + ver);
+            String altVer = ("0".equals(ver)) ? "1" : "0";
+            Set<String> altValue = mmap.get(nodeId + "_" + altVer);
+            if (altValue == null || !value.equals(altValue)) {
+                // If there's no match, return null - something is wrong
+                return null;
+            }
+            if (ver.equals("0")) {
+                // only return the answer
+                response.putAll(nodeId, value);
+            }
+        }
+        return response;
     }
 
     private List<CausalityHitReviewData.CausalityData> convertToCausalityData(ContextTree contextTree, Multimap<String, String> queryToCauses, Map<String, CausalityHitReviewData.CausalityData> queryNodeIdToCausalityData, boolean condition) {

@@ -17,8 +17,8 @@
         });
     </script>
     <style>
-        input[type=checkbox][disabled]:checked{
-            outline:2px solid red;
+        input[type=checkbox][disabled]:checked {
+            outline: 2px solid red;
         }
     </style>
 </head>
@@ -47,6 +47,11 @@
                 </div>
                 <#if hitForReview.hitDone>
                     <#assign hiddenInput = []>
+                    <#if !hitForReview.consistentAnswers>
+                        <div class="form-group row">
+                            <div class="col-sm-12 text-danger">Non consistent answer</div>
+                        </div>
+                    </#if>
                     <#list hitForReview.causalityDataList as causalityData>
                         <div class="form-group row">
                             <label class="col-sm-3 col-form-label">Query node (${causalityData.queryNodeId})</label>
