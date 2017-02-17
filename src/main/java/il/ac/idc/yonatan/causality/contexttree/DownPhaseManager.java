@@ -15,7 +15,7 @@ import java.util.Set;
 import static com.google.common.collect.Lists.newArrayList;
 
 @Service
-public class DownPhaseManager implements PhaseManager{
+public class DownPhaseManager implements PhaseManager {
     private ContextTreeManager contextTreeManager;
 
     private AppConfig appConfig;
@@ -29,7 +29,7 @@ public class DownPhaseManager implements PhaseManager{
         this.appConfig = appConfig;
         this.hitManager = hitManager;
         this.contextTreeManager = contextTreeManager;
-        this.causalityPhaseManager=causalityPhaseManager;
+        this.causalityPhaseManager = causalityPhaseManager;
     }
 
     public List<String> canCreateHits() {
@@ -38,9 +38,10 @@ public class DownPhaseManager implements PhaseManager{
         if (phase != Phases.DOWN_PHASE) {
             return newArrayList("Context tree in phase " + phase);
         }
-        Node rootNode = contextTree.getRootNode();
-        if (!rootNode.getDownHitIds().isEmpty()) {
-            return newArrayList("HITs already created for " + phase);
+        // All hits for down phase are created together.
+        Node aLeafNode = contextTree.getLeafNodeLevel().getNodes().get(0);
+        if (!aLeafNode.getDownHitIds().isEmpty()) {
+            return newArrayList("HITs already created for DOWN_PHASE");
         }
         return Collections.emptyList();
     }
@@ -86,15 +87,17 @@ public class DownPhaseManager implements PhaseManager{
                 rootNode.setNormalizedImportanceScore(1.0);
                 normalizeNode(rootNode);
                 contextTree.setPhase(Phases.CAUSALITY_PHASE);
+                contextTreeManager.save();
                 causalityPhaseManager.initCausalityGraph();
+            } else {
+                contextTreeManager.save();
             }
-            contextTreeManager.save();
         }
         hitManager.submitDownHitReview(hitId, approved, reason);
 
     }
 
-    private void normalizeNode(Node node){
+    private void normalizeNode(Node node) {
         List<Node> children = node.getChildren();
         for (Node child : children) {
             double childNormalizedImportanceScore =
@@ -136,7 +139,7 @@ public class DownPhaseManager implements PhaseManager{
                 result.add(downHitReviewData);
             }
         }
-        Collections.sort(result, (o1, o2) -> Boolean.compare(o1.isHitDone(),o2.isHitDone()));
+        Collections.sort(result, (o1, o2) -> Boolean.compare(o1.isHitDone(), o2.isHitDone()));
         return result;
     }
 
