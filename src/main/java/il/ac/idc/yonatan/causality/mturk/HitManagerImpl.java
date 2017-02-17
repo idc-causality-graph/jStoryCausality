@@ -166,6 +166,7 @@ public class HitManagerImpl implements HitManager {
 
 
     public UpHitResult getUpHitForReview(String hitId) {
+        log.debug("getUpHitForReview({})", hitId);
         return readDb().getUpHits().get(hitId).getUpHitResult();
     }
 
@@ -303,7 +304,7 @@ public class HitManagerImpl implements HitManager {
             String causeId = StringUtils.substringAfter(causeAndAffectIds, ":");
             CauseAndAffect causeAndAffect = new CauseAndAffect(causeId, queryNodeId);
             CausalityHitResult causalityHitResult = causalityResultStorage.getCausalityHitResult();
-            if (!resetHits.contains(hitId)){
+            if (!resetHits.contains(hitId)) {
                 // Clear the hit result before re-save it
                 causalityHitResult.getCauseAndAffects().clear();
                 causalityHitResult.getNonCauseAndAffects().clear();

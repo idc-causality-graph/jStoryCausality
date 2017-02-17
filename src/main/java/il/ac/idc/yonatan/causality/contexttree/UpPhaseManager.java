@@ -48,7 +48,7 @@ public class UpPhaseManager implements PhaseManager {
             errors.add("Tree in phase " + phase);
             return errors;
         }
-        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
+        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
         if (nodeLevel == null) {
             errors.add("Already at the top level");
             return errors;
@@ -64,7 +64,8 @@ public class UpPhaseManager implements PhaseManager {
     }
 
     public void createHits() throws IOException {
-        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
+        ContextTree contextTree = contextTreeManager.getContextTree();
+        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
         if (nodeLevel == null) {
             log.warn("Trying to create hits on root node");
             return;
@@ -101,7 +102,8 @@ public class UpPhaseManager implements PhaseManager {
         Preconditions.checkNotNull(hitId, "hitId must not be null");
         ContextTree contextTree = contextTreeManager.getContextTree();
         Node node = contextTree.getNode(nodeId);
-        log.debug("NodeId {}", nodeId);
+
+        log.debug("Handling review for hit {} node {} approved {}", hitId, nodeId, hitApproved);
         log.debug("Summary {}", summary);
         log.debug("chosenChildrenSummaries: {}", chosenChildrenSummaries);
 
@@ -109,23 +111,24 @@ public class UpPhaseManager implements PhaseManager {
             node.getSummaries().add(summary);
             node.getCompletedUpHitIds().add(hitId);
             for (Node childNode : node.getChildren()) {
+                // this is why children get so many votes.
                 String childId = childNode.getId();
                 Integer vote = chosenChildrenSummaries.get(childId);
                 childNode.getBestSummaryVotes().add(vote);
             }
             //Check if all nodes are done in level. If so, perform the next step
-            NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
+            NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
             boolean isAllNodesDone = nodeLevel.getNodes().stream()
                     .allMatch(Node::isUpPhaseDone);
             if (isAllNodesDone) {
                 contextTree.setUpLevelStep(contextTree.getUpLevelStep() + 1);
-                if (getCurrentUpPhaseNodeLevel() == null) {
+                if (getCurrentUpPhaseNodeLevel(contextTree) == null) {
                     // starting down phase
                     contextTree.setPhase(Phases.DOWN_PHASE);
                 }
             }
-            contextTreeManager.save();
         }
+        contextTreeManager.save();
         hitManager.submitReviewUpHit(hitId, hitApproved, reason);
     }
 
@@ -141,8 +144,7 @@ public class UpPhaseManager implements PhaseManager {
         contextTreeManager.save();
     }
 
-    private NodeLevel getCurrentUpPhaseNodeLevel() {
-        ContextTree contextTree = contextTreeManager.getContextTree();
+    private NodeLevel getCurrentUpPhaseNodeLevel(ContextTree contextTree) {
         int upLevelStep = contextTree.getUpLevelStep();
         LinkedList<NodeLevel> nodeLevels = contextTree.getNodeLevels();
         if (upLevelStep >= nodeLevels.size()) {
@@ -152,8 +154,9 @@ public class UpPhaseManager implements PhaseManager {
     }
 
     public List<UpHitReviewData> getUpPhaseHitsForReviews() {
+        ContextTree contextTree = contextTreeManager.getContextTree();
         List<UpHitReviewData> result = new ArrayList<>();
-        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel();
+        NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
         if (nodeLevel == null) {
             return result;
         }
