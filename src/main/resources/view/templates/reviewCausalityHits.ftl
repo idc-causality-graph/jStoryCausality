@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Review Down Hits</title>
+    <title>Review Causality Hits</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
     <script src="/js/jquery-3.1.1.min.js"></script>
@@ -74,6 +74,7 @@
                                 </div>
                             </div>
                         </#list>
+                    <#sep ><hr/></#sep>
                     </#list>
 
                     <!-- TODO refactor that into common code -->

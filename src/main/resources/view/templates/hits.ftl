@@ -139,6 +139,7 @@
                             </li>
                         </#list>
                     </ul>
+                    <#sep ><hr/></#sep>
                 </#list>
             </div>
         </div>
