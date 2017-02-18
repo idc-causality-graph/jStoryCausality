@@ -4,6 +4,7 @@ import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,7 +24,7 @@ public interface HitManager {
 
     void submitCausalityHitReview(String hitId, boolean hitApproved, String reason);
 
-    String createDownHit(List<String> allRootSummaries, List<String> nodeSummaries, boolean isLeaf);
+    String createDownHit(List<String> parentsSummaries, List<Pair<String,String>> childrenIdsAndSummaries, boolean isLeaf);
 
     void reset();
 

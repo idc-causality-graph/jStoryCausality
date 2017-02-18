@@ -54,8 +54,8 @@ public class Node {
     private CausalityData causalityData = new CausalityData();
 
     /**
-     * This is a normalized score of the scores the workers has given, with respect to the parent.
-     * That is, if the average score is 5.5, the normalized score here will be <code>(5.5-1)/6*parent.normalizedImportanceScore</code>
+     * This is a normalized score of the worker-normalized scores the workers has given, with respect to the parent.
+     * That is, if the average score is 0.7, the normalized score here will be <code>0.7*parent.normalizedImportanceScore</code>
      */
     private Double normalizedImportanceScore;
 
@@ -78,9 +78,19 @@ public class Node {
     @Setter(AccessLevel.NONE)
     private List<Integer> eventImportanceScores = new ArrayList<>();
 
+    /**
+     * A list of scores, normalized in the context of the worker's other scores.
+     * That is, if a worker has given to 3 siblings the scores [1,3,5], the normalized scores will be [1/5, 3/5, 5/5].
+     * This list contains the workers scores of a specific child. So if this is the second child, and this is the first
+     * worker which scores it, this list will contain a single element with value [3/5] (and the eveventImportanceScores
+     * will contain the raw score - [3]
+     */
+    @Setter(AccessLevel.NONE)
+    private List<Double> eventImportanceWorkerNormalizedScores = new ArrayList<>();
+
     public boolean isDownPhaseDone() {
-        //No down phase for root.
-        return parentNodeId == null || (downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
+        //No down phase for leafs.
+        return isLeaf()|| (downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
     }
 
     private List<String> childIds = new ArrayList<>();
@@ -108,16 +118,7 @@ public class Node {
      * @return
      */
     public double getAverageImportanceScore() {
-        return eventImportanceScores.stream().collect(Collectors.averagingInt(x -> x));
-    }
-
-    /**
-     * This is a [0.0-1.0] scale of the average of the importance scores the workers has given
-     *
-     * @return
-     */
-    public double getNormAverageImportanceScore() {
-        return Math.max((getAverageImportanceScore() - 1) / 6, 0);
+        return eventImportanceWorkerNormalizedScores.stream().collect(Collectors.averagingDouble(x -> x));
     }
 
     /**

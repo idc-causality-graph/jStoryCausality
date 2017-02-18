@@ -7,6 +7,7 @@ import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
 import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
+import il.ac.idc.yonatan.causality.mturk.data.IdScoreAndEvent;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 @Service
@@ -119,8 +123,8 @@ public class HitManagerImpl implements HitManager {
     public static class DownHitResultStorage {
         private DownHitResult downHitResult;
         private boolean leaf;
-        private List<String> allRootSummaries;
-        private List<String> nodeSummaries;
+        private List<String> parentsSummaries;
+        private List<Pair<String, String>> childrenIdsAndSummaries;
     }
 
     public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries) {
@@ -194,23 +198,23 @@ public class HitManagerImpl implements HitManager {
         } else {
             DownHitResult hitResult = db.getDownHits().get(hitId).getDownHitResult();
             hitResult.setHitDone(false);
-            hitResult.setImportanceScore(null);
-            hitResult.setMostImportantEvent(null);
+            hitResult.setIdsAndScoresAndEvents(null);
         }
         saveDb(db);
     }
 
     @Override
-    public String createDownHit(List<String> allRootSummaries, List<String> nodeSummaries, boolean isLeaf) {
+    public String createDownHit(List<String> parentsSummaries, List<Pair<String, String>> childrenIdsAndSummaries, boolean isLeaf) {
         String hitId = "HIT_D-" + RandomStringUtils.randomAlphanumeric(8);
         HitStorage db = readDb();
         DownHitResult downHitResult = new DownHitResult();
         downHitResult.setHitDone(false);
         DownHitResultStorage downHitResultStorage = new DownHitResultStorage(
-                downHitResult, isLeaf, allRootSummaries, nodeSummaries);
+                downHitResult, isLeaf, parentsSummaries, childrenIdsAndSummaries);
         db.getDownHits().put(hitId, downHitResultStorage);
         saveDb(db);
         return hitId;
+
     }
 
     @GetMapping("/hits")
@@ -260,23 +264,46 @@ public class HitManagerImpl implements HitManager {
         }
     }
 
+    private static String findHitIdForHitDownFieldKey(String key){
+        key = StringUtils.substringAfter(key,"DOWN_");
+        key = StringUtils.substringBeforeLast(key,"_");
+        key = StringUtils.substringBeforeLast(key,"_");
+        return key;
+    }
     private void processDownHits(HitStorage hitStorage, Map<String, String> result) {
-
         Set<String> hitIds = result.keySet().stream()
                 .filter(x -> x.startsWith("DOWN_"))
-                .map(s -> StringUtils.substringAfter(s, "DOWN_"))
-                .map(s -> StringUtils.substringBeforeLast(s, "_"))
+                .map(HitManagerImpl::findHitIdForHitDownFieldKey)
+//                .map(s -> StringUtils.substringAfter(s, "DOWN_"))
+//                .map(s -> StringUtils.substringBeforeLast(s, "_"))
                 .collect(toSet());
 
         for (String hitId : hitIds) {
             DownHitResultStorage downHitResultStorage = hitStorage.getDownHits().get(hitId);
-            Integer importanceScore = NumberUtils.createInteger(result.get("DOWN_" + hitId + "_score"));
-            String mostImportantEvent = result.get("DOWN_" + hitId + "_event");
-            if (importanceScore != null && StringUtils.isNotEmpty(mostImportantEvent)) {
+            System.out.println("All keys: "+result.keySet());
+            System.out.println("hitid "+hitId);
+            List<String> scoreFields = result.keySet().stream()
+                    .filter(name -> name.startsWith("DOWN_" + hitId + "_score_"))
+                    .collect(toList());
+            System.out.println("scorefields "+scoreFields);
+
+            List<IdScoreAndEvent> idScoreAndEvents = new ArrayList<>();
+            boolean completed = true;
+            for (String scoreField : scoreFields) {
+                String idx = StringUtils.substringAfterLast(scoreField, "_");
+                Integer score = NumberUtils.createInteger(result.get(scoreField));
+                String nodeId = result.get("DOWN_" + hitId + "_nodeid_" + idx);
+                String event = result.get("DOWN_" + hitId + "_event_" + idx);
+                if (score != null && nodeId != null && StringUtils.isNotEmpty(event)) {
+                    idScoreAndEvents.add(new IdScoreAndEvent(nodeId, score, event));
+                } else {
+                    completed = false;
+                }
+            }
+            if (completed && !idScoreAndEvents.isEmpty()) {
                 DownHitResult downHitResult = downHitResultStorage.getDownHitResult();
                 downHitResult.setHitDone(true);
-                downHitResult.setMostImportantEvent(mostImportantEvent);
-                downHitResult.setImportanceScore(importanceScore);
+                downHitResult.setIdsAndScoresAndEvents(idScoreAndEvents);
             }
         }
     }

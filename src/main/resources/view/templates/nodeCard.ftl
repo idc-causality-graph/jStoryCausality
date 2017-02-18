@@ -94,21 +94,21 @@
                 </p>
             </div>
         </div>
-        <#if (node.eventImportanceScores?size>0)>
-            <div class="form-group row">
-                <label class="col-sm-2 col-form-label">Importance scores</label>
-                <div class="col-sm-10">
-                    <p class="form-control-static">${node.eventImportanceScores?join(", ")}</p>
-                </div>
+    </#if>
+    <#if (node.eventImportanceScores?size>0)>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Importance scores</label>
+            <div class="col-sm-10">
+                <p class="form-control-static">${node.eventImportanceScores?join(", ")}</p>
             </div>
-            <div class="form-group row">
-                <label class="col-sm-2 col-form-label">Average score</label>
-                <div class="col-sm-10">
-                    <p class="form-control-static">${node.normAverageImportanceScore?string["0.##"]}
-                        (${node.averageImportanceScore?string["0.##"]})</p>
-                </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Average score</label>
+            <div class="col-sm-10">
+                <p class="form-control-static">${node.averageImportanceScore?string["0.##"]}
+                    (${node.eventImportanceWorkerNormalizedScores?join(", ")})</p>
             </div>
-        </#if>
+        </div>
     </#if>
     <#if node.normalizedImportanceScore??>
         <div class="form-group row">

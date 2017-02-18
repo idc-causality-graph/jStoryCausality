@@ -35,37 +35,46 @@
                 </div>
                 <div class="card-block">
                     <div class="form-group row">
-                        <label class="col-sm-3 col-form-label">Is done?</label>
+                        <label class="col-sm-3 form-control-label">Is done?</label>
                         <div class="col-sm-9">
                             <span class="form-control-static">${hitForReview.hitDone?c}</span>
                         </div>
                     </div>
 
-                    <label>Root node summaries</label>
+                    <label>Parents summaries</label>
                     <ul>
-                        <#list hitForReview.rootNodeSummaries as rootNodeSummary>
-                            <li>${rootNodeSummary}</li>
+                        <#list hitForReview.parentsSummaries as parentSaummary>
+                            <li>${parentSaummary}</li>
                         </#list>
                     </ul>
-                    <label>Node summaries</label>
-                    <ul>
-                        <#list hitForReview.nodeSummaries as nodeSummary>
-                            <li>${nodeSummary}</li>
-                        </#list>
-                    </ul>
+
                     <#if hitForReview.hitDone>
-                        <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Most important event</label>
-                            <div class="col-sm-9">
-                                <span class="form-control-static">${hitForReview.mostImportantEvent}</span>
+                        <label>Scores and events</label>
+                        <ul>
+                        <#list hitForReview.idsAndScoresAndEvents as idAndScoreAndEvent>
+                            <div class="form-group row">
+                                <label class="col-sm-2 form-control-label">Summary</label>
+                                <div class="col-sm-10">
+                                    <span class="form-control-static">${hitForReview.childIdToSummary[idAndScoreAndEvent.left]}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Most important event score</label>
-                            <div class="col-sm-9">
-                                <span class="form-control-static">${hitForReview.importanceScore}</span>
+                            <div class="form-group row">
+                                <label class="col-sm-2 form-control-label">Score (1-7)</label>
+                                <div class="col-sm-10"><span class="form-control-static">
+                                    ${idAndScoreAndEvent.middle}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                            <div class="form-group row">
+                                <label class="col-sm-2 form-control-label">Important event</label>
+                                <div class="col-sm-10"><span class="form-control-static">
+                                    ${idAndScoreAndEvent.right}
+                                </span>
+                                </div>
+                            </div>
+                            <#sep ><hr/>
+                        </#list>
+                        </ul>
 
                         <fieldset class="form-group row">
                             <legend class="col-form-legend col-sm-2">Approve</legend>
@@ -81,16 +90,16 @@
                             </div>
                         </fieldset>
                         <div class="form-group row" id="${hitForReview.hitId}_reason" style="display: none">
-                            <label class="col-sm-3 col-form-label">Reason</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-1 form-control-label">Reason</label>
+                            <div class="col-sm-11">
                                 <textarea name="${hitForReview.hitId}_reason" placeholder="Reason"
+                                          autocomplete="off"
                                           class="form-control"></textarea>
                             </div>
                         </div>
 
                     </#if>
-                    <input type="hidden" name="${hitForReview.hitId}_score" value="${hitForReview.importanceScore!""}">
-                    <input type="hidden" name="${hitForReview.hitId}_event" value="${hitForReview.mostImportantEvent!""}">
+                    <input type="hidden" name="${hitForReview.hitId}_data" value="${hitForReview.encodedData!""}">
                     <input type="hidden" name="${hitForReview.hitId}_nodeid" value="${hitForReview.nodeId}">
                 </div>
             </div>

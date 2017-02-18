@@ -20,60 +20,63 @@
 <body>
 <div class="container-fluid">
     <h1>Review UP hits</h1>
-<form method="post">
-    <div class="sticky-top">
-        <div class="d-flex flex-row">
-            <button class="p-2 btn btn-info" type="submit">Submit</button>
-            <a class="p-2 btn btn-info" href="">Reload</a>
+    <form method="post">
+        <div class="sticky-top">
+            <div class="d-flex flex-row">
+                <button class="p-2 btn btn-info" type="submit">Submit</button>
+                <a class="p-2 btn btn-info" href="">Reload</a>
+            </div>
         </div>
-    </div>
-<#list hitsForReview?sort_by('hitDone')?reverse as hitForReview>
-    <div>
+    <#list hitsForReview?sort_by('hitDone')?reverse as hitForReview>
+
         <div class="card mb-2">
             <div class="card-header ${hitForReview.hitDone?then('card-primary card-inverse','')}">
                 HitId: ${hitForReview.hitId}
             </div>
             <div class="card-block">
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label">Is done?</label>
-                    <div class="col-sm-9">
-                        <span class="form-control-static">${hitForReview.hitDone?c}</span>
-                    </div>
+                    <label class="col-sm-1 form-control-label">Is done?</label>
+                    <div class="col-sm-11 form-control-static">${hitForReview.hitDone?c}</div>
                 </div>
 
-            <#if hitForReview.hitDone>
-                <div class="form-group row">
-                    <label class="col-sm-3 col-form-label">Task text</label>
-                    <div class="col-sm-9">
-                        <span class="form-control-static">${hitForReview.taskText}</span>
+                <#if hitForReview.hitDone>
+                    <div class="form-group row">
+                        <label class="col-sm-1 form-control-label">Task text</label>
+                        <div class="col-sm-11">
+                            <span class="form-control-static">${hitForReview.taskText}</span>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group row">
-                    <label class="col-sm-3 col-form-label">Summary</label>
-                    <div class="col-sm-9">
-                        <span class="form-control-static">${hitForReview.summary}</span>
+                    <hr/>
+                    <div class="form-group row">
+                        <label class="col-sm-1 form-control-label">Summary</label>
+                        <div class="col-sm-11">
+                            <span class="form-control-static">${hitForReview.summary}</span>
+                        </div>
                     </div>
-                </div>
-            <div class="col-sm-9">
-                Approve:
-                <label><input type="radio" name="${hitForReview.hitId}_approve" value="1"
-                              data-hitid="${hitForReview.hitId}"> Yes</label>
-                <label><input type="radio" name="${hitForReview.hitId}_approve" value="0"
-                              data-hitid="${hitForReview.hitId}"> No</label>
-                <div id="${hitForReview.hitId}_reason" style="display: none">
-                    <textarea name="${hitForReview.hitId}_reason" placeholder="Reason"></textarea>
-                </div>
-            </#if>
-            <input type="hidden" name="${hitForReview.hitId}_chosenChildrenSummaries" value="${hitForReview.chosenChildrenSummariesJsonBase64}">
-            <input type="hidden" name="${hitForReview.hitId}_nodeid" value="${hitForReview.nodeId}">
-            <input type="hidden" name="${hitForReview.hitId}_summary" value="${hitForReview.summaryBase64}">
+                    <div class="form-group row">
+                        <label class="col-sm-1 form-control-label">Approve:</label>
+                        <div class="col-sm-11 form-control">
+                            <label><input type="radio" name="${hitForReview.hitId}_approve" value="1"
+                                          data-hitid="${hitForReview.hitId}"> Yes</label>
+                            <label><input type="radio" name="${hitForReview.hitId}_approve" value="0"
+                                          data-hitid="${hitForReview.hitId}"> No</label>
+                            <div id="${hitForReview.hitId}_reason" style="display: none">
+                                <textarea autocomplete="off" name="${hitForReview.hitId}_reason"
+                                          placeholder="Reason"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </#if>
+                <input type="hidden" name="${hitForReview.hitId}_chosenChildrenSummaries"
+                       value="${hitForReview.chosenChildrenSummariesJsonBase64}">
+                <input type="hidden" name="${hitForReview.hitId}_nodeid" value="${hitForReview.nodeId}">
+                <input type="hidden" name="${hitForReview.hitId}_summary" value="${hitForReview.summaryBase64}">
             </div>
         </div>
-    </div>
-    <#sep><br></#sep>
-</#list>
+        <#sep><br></#sep>
+    </#list>
 
-</form>
+    </form>
 </div>
 </body>
 </html>

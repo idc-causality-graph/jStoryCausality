@@ -40,8 +40,8 @@
             </div>
             <div class="card-block">
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label">Is done?</label>
-                    <div class="col-sm-9">
+                    <label class="col-sm-2 form-control-label">Is done?</label>
+                    <div class="col-sm-10">
                         <span class="form-control-static">${hitForReview.hitDone?c}</span>
                     </div>
                 </div>
@@ -54,18 +54,19 @@
                     </#if>
                     <#list hitForReview.causalityDataList as causalityData>
                         <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Query node (${causalityData.queryNodeId})</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 form-control-label">Query node (${causalityData.queryNodeId})</label>
+                            <div class="col-sm-10">
                                 <span class="form-control-static">${causalityData.queryText}</span>
                             </div>
                         </div>
                         <label>Causes</label><br>
+                        <ul>
                         <#list causalityData.causeNodesTextRelations as nodeTextRel>
                             <#if nodeTextRel.right>
                                 <#assign hiddenInput = hiddenInput + [ causalityData.queryNodeId + ':' + nodeTextRel.left]>
                             </#if>
                             <div class="form-group row">
-                                <label class="col-sm-2 col-form-label">
+                                <label class="col-sm-2 form-control-label">
                                     <input readonly disabled type="checkbox" ${nodeTextRel.right?then('checked','')}>
                                     (${nodeTextRel.left})
                                 </label>
@@ -74,6 +75,7 @@
                                 </div>
                             </div>
                         </#list>
+                        </ul>
                     <#sep ><hr/></#sep>
                     </#list>
 
@@ -92,9 +94,10 @@
                         </div>
                     </fieldset>
                     <div class="form-group row" id="${hitForReview.hitId}_reason" style="display: none">
-                        <label class="col-sm-3 col-form-label">Reason</label>
-                        <div class="col-sm-9">
+                        <label class="col-sm-2 form-control-label">Reason</label>
+                        <div class="col-sm-10">
                                 <textarea name="${hitForReview.hitId}_reason" placeholder="Reason"
+                                          autocomplete="off"
                                           class="form-control"></textarea>
                         </div>
                     </div>

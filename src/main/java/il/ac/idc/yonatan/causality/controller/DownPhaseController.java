@@ -5,6 +5,7 @@ import il.ac.idc.yonatan.causality.contexttree.DownPhaseManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,11 +50,23 @@ public class DownPhaseController extends AbsPhaseController {
             boolean approved = StringUtils.equals(result.get(hitId + "_approve"), "1");
             String reason = result.get(hitId + "_reason");
             String nodeId = result.get(hitId + "_nodeid");
-            String mostImportantEvent = result.get(hitId + "_event");
-            Integer importanceScore = NumberUtils.createInteger(result.get(hitId + "_score"));
-            downPhaseManager.handleDownPhaseReview(nodeId, hitId, approved, reason, importanceScore, mostImportantEvent);
+            String hitEncodedData = result.get(hitId+"_data");
+            List<Triple<String, Integer, String>> idsAndScoresAndEvents = decodeDataToIdsAndScoresAndEvents(hitEncodedData);
+
+            downPhaseManager.handleDownPhaseReview(nodeId, hitId, approved, reason, idsAndScoresAndEvents);
         }
         return "redirect:/contextTree/reviewsDownPhase";
+    }
+
+    private List<Triple<String, Integer, String>> decodeDataToIdsAndScoresAndEvents(String encodedData){
+        List<Triple<String, Integer, String>> result=new ArrayList<>();
+        String[] split = StringUtils.split(encodedData, ':');
+        for (String part : split) {
+            String data = new String(Base64.getDecoder().decode(part));
+            String[] singleData = StringUtils.split(data, ":",3);
+            result.add(Triple.of(singleData[0],Integer.parseInt(singleData[1]),singleData[2]));
+        }
+        return result;
     }
 
     @PostMapping("contextTree/progressDown")

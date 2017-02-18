@@ -116,28 +116,37 @@
             </ui>
         </div>
     </nav>
-    <div class="btn-group sticky-top" role="group">
-        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+    <div class=" sticky-top" role="group">
+        <form id="frm_progressup"></form>
+        <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Toolbar with button groups">
 
-            <form action="/contextTree/progressUp" method="post">
-                <button class="btn btn-secondary" type="submit" ${(phase!='UP_PHASE')?then('disabled','')}>
+            <div class="btn-group" role="group">
+                <div class="btn-group mr-3" role="group">
+                    <button class="btn btn-secondary"
+                            formaction="/contextTree/progressUp" formmethod="post" form="frm_progressup"
+                            type="submit" ${(phase!='UP_PHASE')?then('disabled','')}>
                     Progress up hits
-                </button>
-            </form>
-            <form action="/contextTree/progressDown" method="post">
-                <button class="btn btn-secondary"
-                        type="submit" ${(phase!='DOWN_PHASE')?then('disabled','')}>Progress down hits
-                </button>
-            </form>
-            <form action="/contextTree/progressCausality" method="post">
-                <button class="btn btn-secondary"
-                        type="submit" ${(phase!='CAUSALITY_PHASE')?then('disabled','')}>Progress causality hits
-                </button>
-            </form>
-            <span class="ml-4">&nbsp;</span>
-            <form action="/contextTree/reset" method="post">
-                <button disabled id="reset_btn" class="btn btn-danger" type="submit">Reset</button>
-            </form>
+                    </button>
+                    <button class="btn btn-secondary"
+                            formaction="/contextTree/progressDown" formmethod="post" form="frm_progressup"
+                            type="submit" ${(phase!='DOWN_PHASE')?then('disabled','')}>Progress down hits
+                    </button>
+                    <button class="btn btn-secondary"
+                            formaction="/contextTree/progressCausality" formmethod="post" form="frm_progressup"
+                            type="submit" ${(phase!='CAUSALITY_PHASE')?then('disabled','')}>Progress causality hits
+                    </button>
+                </div>
+                <div class="btn-group ml-2" role="group">
+                    <a class="btn btn-secondary" href="contextTree">Reload</a>
+                </div>
+            </div>
+
+
+            <div class="btn-group ml-5" role="group">
+                <form action="/contextTree/reset" method="post">
+                    <button disabled id="reset_btn" class="btn btn-danger" type="submit">Reset</button>
+                </form>
+            </div>
 
         </div>
     </div>
