@@ -15,14 +15,14 @@
                 </p>
             </div>
         </div>
-    <#if (!node.leaf)>
-        <div class="form-group row mb-0">
-            <label class="col-sm-2 col-form-label">Up phase done?</label>
-            <div class="col-sm-10">
-                <p class="form-control-static">${node.upPhaseDone?c}</p>
+        <#if (!node.leaf)>
+            <div class="form-group row mb-0">
+                <label class="col-sm-2 col-form-label">Up phase done?</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static">${node.upPhaseDone?c}</p>
+                </div>
             </div>
-        </div>
-    </#if>
+        </#if>
     </#if>
         <div class="form-group row mb-0">
             <label class="col-sm-2 col-form-label">Down phase done?</label>
@@ -67,7 +67,9 @@
                            <#if (bestSummaryIdx>-1)>readonly</#if>
                            value='${summary?index}'>
                 </#if>
+                <#if (!isRoot && summary?index==bestSummaryIdx)><u></#if>
                 Summary #{summary?index + 1}
+                <#if (!isRoot && summary?index==bestSummaryIdx)></u></#if>
             </label>
             <div class="col-sm-10">
                 <p class="form-control-static">${summary}</p>
