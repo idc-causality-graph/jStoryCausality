@@ -38,6 +38,10 @@ public class DownPhaseManager implements PhaseManager {
         if (phase != Phases.DOWN_PHASE) {
             return newArrayList("Context tree in phase " + phase);
         }
+        Node rootNode = contextTree.getRootNode();
+        if (rootNode.getBestSummaryVotes().isEmpty()) {
+            return newArrayList("Missing best summary choice for the root node");
+        }
         // All hits for down phase are created together.
         Node aLeafNode = contextTree.getLeafNodeLevel().getNodes().get(0);
         if (!aLeafNode.getDownHitIds().isEmpty()) {
