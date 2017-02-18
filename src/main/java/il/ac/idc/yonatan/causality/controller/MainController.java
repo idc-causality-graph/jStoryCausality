@@ -2,7 +2,7 @@ package il.ac.idc.yonatan.causality.controller;
 
 import il.ac.idc.yonatan.causality.contexttree.ContextTree;
 import il.ac.idc.yonatan.causality.contexttree.ContextTreeManager;
-import il.ac.idc.yonatan.causality.mturk.HitManagerImpl;
+import il.ac.idc.yonatan.causality.mturk.HitManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,12 +16,12 @@ import java.io.IOException;
 @Slf4j
 public class MainController {
 
-    private ContextTreeManager contextTreeManager;
+    private final ContextTreeManager contextTreeManager;
 
-    private HitManagerImpl hitManager;
+    private final HitManager hitManager;
 
     @Autowired
-    public MainController(ContextTreeManager contextTreeManager, HitManagerImpl hitManager) {
+    public MainController(ContextTreeManager contextTreeManager, HitManager hitManager) {
         this.contextTreeManager = contextTreeManager;
         this.hitManager = hitManager;
     }

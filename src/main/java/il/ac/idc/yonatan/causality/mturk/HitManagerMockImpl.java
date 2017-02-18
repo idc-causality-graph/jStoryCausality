@@ -22,6 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
@@ -36,7 +38,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,20 +52,22 @@ import static java.util.stream.Collectors.toSet;
 @Service
 @Controller
 @Slf4j
-public class HitManagerImpl implements HitManager {
+//@Conditional(HitManagerConfig.MockHitManager.class)
+//@Controller
+@Profile("mockAws")
+public class    HitManagerMockImpl implements HitManager {
 
     private static final File DB = new File("./hit-storage.json");
 
     private ObjectMapper objectMapper;
 
     @Autowired
-    public HitManagerImpl(ObjectMapper objectMapper) {
+    public HitManagerMockImpl(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
     @PostConstruct
     public void init() {
-        HashFunction hf = Hashing.murmur3_32();
         log.info("Using mock db in {}", DB);
 
     }
@@ -273,7 +276,7 @@ public class HitManagerImpl implements HitManager {
     private void processDownHits(HitStorage hitStorage, Map<String, String> result) {
         Set<String> hitIds = result.keySet().stream()
                 .filter(x -> x.startsWith("DOWN_"))
-                .map(HitManagerImpl::findHitIdForHitDownFieldKey)
+                .map(HitManagerMockImpl::findHitIdForHitDownFieldKey)
 //                .map(s -> StringUtils.substringAfter(s, "DOWN_"))
 //                .map(s -> StringUtils.substringBeforeLast(s, "_"))
                 .collect(toSet());
