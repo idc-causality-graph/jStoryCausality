@@ -65,6 +65,26 @@ public class HitManagerAwsImpl implements HitManager {
                 Pair.of("1236", "summary for 1236")
         );
         createDownHit(summaries, childrenIdsAndSummaries, true);
+
+
+        List<CausalityQuestion> causalityQuestions = Lists.newArrayList(
+                new CausalityQuestion("question1",
+                        Lists.newArrayList(
+                                new CausalityQuestion.CauseAndNodeId("cause1","123"),
+                                new CausalityQuestion.CauseAndNodeId("cause2","124"),
+                                new CausalityQuestion.CauseAndNodeId("cause3","125")
+                        ),
+                        "q123"),
+                new CausalityQuestion("question3",
+                        Lists.newArrayList(
+                                new CausalityQuestion.CauseAndNodeId("1cause1","4123"),
+                                new CausalityQuestion.CauseAndNodeId("1cause2","4124"),
+                                new CausalityQuestion.CauseAndNodeId("1cause3","4125")
+                        ),
+                        "q124")
+        );
+        createCausalityHit("a global summary! <i>a</i>\n", causalityQuestions
+                );
     }
 
 //    @Autowired
@@ -97,6 +117,13 @@ public class HitManagerAwsImpl implements HitManager {
                                 boolean isLeaf) {
         String downHitHtml = renderHitTemplate("downHit.ftl",
                 ImmutableMap.of("parentsSummaries", parentsSummaries, "childrenIdsAndSummaries", childrenIdsAndSummaries));
+        return "hit-id";
+    }
+
+    @Override
+    public String createCausalityHit(String globalSummary, List<CausalityQuestion> causalityQuestions) {
+        String causalityHitHtml = renderHitTemplate("causalityHit.ftl",
+                ImmutableMap.of("globalSummary", globalSummary,"causalityQuestions",causalityQuestions));
         return "hit-id";
     }
 
@@ -135,8 +162,5 @@ public class HitManagerAwsImpl implements HitManager {
 
     }
 
-    @Override
-    public String createCausalityHit(String globalSummary, List<CausalityQuestion> causalityHitQuestions) {
-        return null;
-    }
+
 }

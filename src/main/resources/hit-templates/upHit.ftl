@@ -13,10 +13,10 @@
     </script>
 </head>
 <body>
+<@c.unaccept_banner />
 <form name='mturk_form' method='post' id='mturk_form' action='${submitUrl}'>
 <@c.assignment_hidden />
     <section class="container" id="other">
-    <@c.unaccept_banner />
         <div class="row col-xs-12 col-md-12"><!-- Instructions -->
 
             <div class="panel panel-primary">
@@ -37,10 +37,11 @@
                     <p>A good summary is short, and consists of only the important events and details from the original
                         text.<br/>
                         For example, for the text: &quot;<i>Cupid looks down as Bill initiates a conversation with Tina.
-                        Cupid flies above a roof top, hunched over before he notices something above him. Cupid's scroll
-                        floats around him. He then pushes it away with a sad look on his face.</i>&quot;<br/>
+                            Cupid flies above a roof top, hunched over before he notices something above him. Cupid's
+                            scroll
+                            floats around him. He then pushes it away with a sad look on his face.</i>&quot;<br/>
                         A good summary is: &quot;<i>Cupid watches Bill and Tina, then flies away. He is sad to see his
-                        scroll.</i>&quot;</p>
+                            scroll.</i>&quot;</p>
                     <p>Your writing must be original and can not simply be a copy of part of the text. We strive to
                         award all assignments so please write in your own words using good grammar and spelling.</p>
                 </div>

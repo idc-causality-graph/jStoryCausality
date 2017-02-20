@@ -13,10 +13,10 @@
     </script>
 </head>
 <body>
+<@c.unaccept_banner />
 <form name='mturk_form' method='post' id='mturk_form' action='${submitUrl}'>
 <@c.assignment_hidden />
     <section class="container" id="other">
-    <@c.unaccept_banner />
         <div class="row col-xs-12 col-md-12"><!-- Instructions -->
 
             <div class="panel panel-primary">
@@ -93,6 +93,7 @@
                                 understanding the following summaries of the entire story? </label>
                         <#--<div class="col-sm-10 ">-->
                             <div class="form-control form-check form-check-inline">
+                                <span>Not important</span>
                                 <#list 1..7 as rate>
                                     <label class="form-check-label">
                                         <input class="form-check-input" type="radio"
@@ -103,6 +104,7 @@
                                     ${rate}
                                     </label>
                                 </#list>
+                                <span>Most important</span>
                             </div>
                             <div class="help-block">Please provide a score
                                 between 1 (not important at all) to 7 (the most important event in the full-text
