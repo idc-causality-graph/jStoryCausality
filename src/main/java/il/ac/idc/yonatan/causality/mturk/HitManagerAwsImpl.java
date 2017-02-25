@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
-import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -17,6 +16,9 @@ import il.ac.idc.yonatan.causality.mturk.data.IdScoreAndEvent;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import mturk.wsdl.ApproveAssignment;
+import mturk.wsdl.ApproveAssignmentRequest;
+import mturk.wsdl.ApproveAssignmentResponse;
 import mturk.wsdl.Assignment;
 import mturk.wsdl.AssignmentStatus;
 import mturk.wsdl.Comparator;
@@ -24,14 +26,23 @@ import mturk.wsdl.CreateHIT;
 import mturk.wsdl.CreateHITRequest;
 import mturk.wsdl.CreateHITResponse;
 import mturk.wsdl.Errors;
+import mturk.wsdl.ExtendHIT;
+import mturk.wsdl.ExtendHITRequest;
+import mturk.wsdl.ExtendHITResponse;
 import mturk.wsdl.GetAssignmentsForHIT;
 import mturk.wsdl.GetAssignmentsForHITRequest;
 import mturk.wsdl.GetAssignmentsForHITResponse;
 import mturk.wsdl.GetAssignmentsForHITResult;
 import mturk.wsdl.HIT;
+import mturk.wsdl.OperationRequest;
 import mturk.wsdl.Price;
 import mturk.wsdl.QualificationRequirement;
+import mturk.wsdl.RejectAssignment;
+import mturk.wsdl.RejectAssignmentRequest;
+import mturk.wsdl.RejectAssignmentResponse;
+import mturk.wsdl.Request;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +55,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.freemarker.FreeMarkerConfigurationFactory;
 import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 
 import javax.crypto.Mac;
@@ -159,14 +169,9 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         createHIT.getRequest().add(chr);
 
         CreateHITResponse result = mturkSubmit(createHIT);
-        if (result.getHIT().isEmpty()) {
-            throw mturkException("Cannot create hit", result.getOperationRequest().getErrors());
-        }
+        assertMturkResponse(result, "HIT");
         HIT hit = result.getHIT().get(0);
-        if (StringUtils.equalsIgnoreCase("True", hit.getRequest().getIsValid())) {
-            return hit.getHITId();
-        }
-        throw mturkException("Cannot create hit", hit.getRequest().getErrors());
+        return hit.getHITId();
     }
 
     @SneakyThrows({IOException.class, TemplateException.class})
@@ -217,8 +222,9 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         String operation = request.getClass().getSimpleName();
         BeanUtils.setProperty(request, "AWSAccessKeyId", appConfig.getAwsKey());
 
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-        String timestamp = StringUtils.substringBefore(now.format(DateTimeFormatter.ISO_DATE_TIME), "[");
+        String timestamp = now.format(df);
         System.out.println(timestamp);
         BeanUtils.setProperty(request, "timestamp", new XMLGregorianCalendarImpl(GregorianCalendar.from(now)));
 
@@ -262,7 +268,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
 
-    private Map<String, String> getHitAnswers(String hitId) {
+    private Assignment getSubmittedAssignment(String hitId) {
         GetAssignmentsForHIT getAssignmentsForHIT = new GetAssignmentsForHIT();
         setAwsRequestHeaders(getAssignmentsForHIT);
 
@@ -274,19 +280,17 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         request.setHITId(hitId);
 
         GetAssignmentsForHITResponse getAssignmentsForHITResponse = mturkSubmit(getAssignmentsForHIT);
-        if (getAssignmentsForHITResponse.getGetAssignmentsForHITResult().isEmpty()) {
-            throw mturkException("Cannot get hit " + hitId, getAssignmentsForHITResponse.getOperationRequest().getErrors());
-        }
+        assertMturkResponse(getAssignmentsForHITResponse, "getAssignmentsForHITResult");
         GetAssignmentsForHITResult getAssignmentsForHITResult = getAssignmentsForHITResponse.getGetAssignmentsForHITResult().get(0);
-        if (!"true".equalsIgnoreCase(getAssignmentsForHITResult.getRequest().getIsValid())) {
-            throw mturkException("Cannot get hit " + hitId, getAssignmentsForHITResult.getRequest().getErrors());
-        }
-
         if (getAssignmentsForHITResult.getNumResults() == 0) {
             return null; //not completed yet
         }
 
-        Assignment assignment = getAssignmentsForHITResult.getAssignment().get(0);
+        return getAssignmentsForHITResult.getAssignment().get(0);
+    }
+
+    private Map<String, String> getHitAnswers(String hitId) {
+        Assignment assignment = getSubmittedAssignment(hitId);
         String rawAnswer = assignment.getAnswer();
         try {
             Document doc = builder.build(IOUtils.toInputStream(rawAnswer, "UTF-8"));
@@ -350,7 +354,11 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     private List<CauseAndAffect> createCauseAndAffects(String eventKey, String causeIds) {
-        return Splitter.on(":").splitToList(causeIds)
+        return Splitter.on(":")
+                .trimResults()
+                .omitEmptyStrings()
+                .splitToList(causeIds)
+
                 .stream()
                 .map(causeId -> new CauseAndAffect(causeId, eventKey))
                 .collect(toList());
@@ -371,9 +379,11 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
                     .map(key -> StringUtils.substringBeforeLast(key, "_causes"))
                     .collect(toSet());
 
+            System.out.println(hitAnswers);
             for (String key : keys) {
-                String causes = hitAnswers.get(key + "_causes");
-                String noncauses = hitAnswers.get(key + "+noncauses");
+                String causes = hitAnswers.get(key + "_causes").trim();
+                String noncauses = hitAnswers.get(key + "_noncauses").trim();
+                System.out.println();
                 causalityHitResult.getCauseAndAffects().addAll(createCauseAndAffects(key, causes));
                 causalityHitResult.getNonCauseAndAffects().addAll(createCauseAndAffects(key, noncauses));
             }
@@ -381,9 +391,57 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return causalityHitResult;
     }
 
+
+    @SneakyThrows
+    private void assertMturkResponse(Object responseObject, String listProperty) {
+        OperationRequest operationRequest = (OperationRequest) PropertyUtils.getProperty(responseObject, "operationRequest");
+        if (operationRequest.getErrors() != null && !operationRequest.getErrors().getError().isEmpty()) {
+            throw mturkException(responseObject.getClass().getSimpleName() + " failed", operationRequest.getErrors());
+        }
+        List results = (List) PropertyUtils.getProperty(responseObject, listProperty);
+        if (results.isEmpty()) {
+            throw new RuntimeException(responseObject.getClass().getSimpleName() + " has no results");
+        }
+        Object result = results.get(0);
+        Request request = (Request) PropertyUtils.getProperty(result, "request");
+        if (!"true".equalsIgnoreCase(request.getIsValid())) {
+            throw mturkException(responseObject.getClass().getSimpleName() + " failed", request.getErrors());
+        }
+    }
+
     private void submitHitReview(String hitId, boolean hitApproved, String reason) {
-        // if not hitApproved, allow more hits
-        // otherwise, approve
+        Assignment assignment = getSubmittedAssignment(hitId);
+        if (assignment == null) {
+            throw new RuntimeException("Missing submitted assignment for hit " + hitId);
+        }
+        String assignmentId = assignment.getAssignmentId();
+        if (hitApproved) {
+            ApproveAssignment approveAssignment = new ApproveAssignment();
+            setAwsRequestHeaders(approveAssignment);
+            ApproveAssignmentRequest approveAssignmentRequest = new ApproveAssignmentRequest();
+            approveAssignment.getRequest().add(approveAssignmentRequest);
+            approveAssignmentRequest.setAssignmentId(assignmentId);
+            ApproveAssignmentResponse response = mturkSubmit(approveAssignment);
+            assertMturkResponse(response, "approveAssignmentResult");
+        } else {
+            RejectAssignment rejectAssignment = new RejectAssignment();
+            setAwsRequestHeaders(rejectAssignment);
+            RejectAssignmentRequest rejectAssignmentRequest = new RejectAssignmentRequest();
+            rejectAssignment.getRequest().add(rejectAssignmentRequest);
+            rejectAssignmentRequest.setAssignmentId(assignmentId);
+            rejectAssignmentRequest.setRequesterFeedback(reason);
+            RejectAssignmentResponse rejectAssignmentResponse = mturkSubmit(rejectAssignment);
+            assertMturkResponse(rejectAssignmentResponse, "rejectAssignmentResult");
+
+            ExtendHIT extendHIT = new ExtendHIT();
+            setAwsRequestHeaders(extendHIT);
+            ExtendHITRequest extendHITRequest = new ExtendHITRequest();
+            extendHIT.getRequest().add(extendHITRequest);
+            extendHITRequest.setMaxAssignmentsIncrement(1);
+            extendHITRequest.setHITId(hitId);
+            ExtendHITResponse extendHitResponse = mturkSubmit(extendHIT);
+            assertMturkResponse(extendHitResponse, "extendHITResult");
+        }
     }
 
     @Override
@@ -415,5 +473,46 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         throw new UnsupportedOperationException("reset is not supported");
 
     }
-
+//
+//    public static void main(String... args) throws Exception {
+//        String key = System.getProperty("causality.awsKey");
+//        String secret = System.getProperty("causality.awsSecretKey");
+//        AppConfig appConfig = new AppConfig();
+//        appConfig.setAwsKey(key);
+//        appConfig.setAwsSecretKey(secret);
+//        appConfig.setSandbox(true);
+//        appConfig.setHitDurationInMinutes(20);
+//        appConfig.setHitLifetimeInMinutes(20);
+//        Configuration c = new org.springframework.ui.freemarker.FreeMarkerConfigurationFactory().createConfiguration();
+//        freemarker.cache.ClassTemplateLoader ctl = new freemarker.cache.ClassTemplateLoader(ClassLoader.getSystemClassLoader(), "/hit-templates");
+//        c.setTemplateLoader(ctl);
+//        HitManagerAwsImpl mturkClient = new HitManagerAwsImpl(c, appConfig);
+//        CausalityQuestion cq1 = new CausalityQuestion("q1",
+//                newArrayList(
+//                        new CausalityQuestion.CauseAndNodeId("c1.1", "nid1"),
+//                        new CausalityQuestion.CauseAndNodeId("c1.2", "nid2"),
+//                        new CausalityQuestion.CauseAndNodeId("c1.3", "nid3")
+//                ),
+//                "qid1");
+//        CausalityQuestion cq2 = new CausalityQuestion("q2",
+//                newArrayList(
+//                        new CausalityQuestion.CauseAndNodeId("c2.1", "nid1"),
+//                        new CausalityQuestion.CauseAndNodeId("c2.2", "nid2"),
+//                        new CausalityQuestion.CauseAndNodeId("c2.3", "nid3")
+//                ),
+//                "qid2");
+//        ////Create hit
+//        //        String hit1 = mturkClient.createCausalityHit("global summary", newArrayList(cq1, cq2));
+////        String hit2 = mturkClient.createCausalityHit("global summary", newArrayList(cq1, cq2));
+////        System.out.println(hit1);
+////        System.out.println(hit2);
+//
+//        //// Read hit
+////        CausalityHitResult cc = mturkClient.getCausalityHitForReview("YYY");
+////        System.out.println(cc);
+//
+//        //// Review hit
+////        mturkClient.submitHitReview("YYY",true,"Just because");
+//
+//    }
 }
