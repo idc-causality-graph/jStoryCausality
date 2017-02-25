@@ -1,4 +1,5 @@
 <#import "common.ftl" as c>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Assignment</title>

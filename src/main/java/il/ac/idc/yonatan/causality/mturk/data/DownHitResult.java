@@ -3,6 +3,7 @@ package il.ac.idc.yonatan.causality.mturk.data;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.Triple;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,5 +12,5 @@ import java.util.List;
 @Data
 public class DownHitResult {
     private boolean hitDone;
-    private List<IdScoreAndEvent> idsAndScoresAndEvents;
+    private List<IdScoreAndEvent> idsAndScoresAndEvents = new ArrayList<>();
 }

@@ -1,8 +1,6 @@
 package il.ac.idc.yonatan.causality.mturk;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
 import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
@@ -22,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
@@ -52,10 +49,8 @@ import static java.util.stream.Collectors.toSet;
 @Service
 @Controller
 @Slf4j
-//@Conditional(HitManagerConfig.MockHitManager.class)
-//@Controller
 @Profile("mockAws")
-public class    HitManagerMockImpl implements HitManager {
+public class HitManagerMockImpl implements HitManager {
 
     private static final File DB = new File("./hit-storage.json");
 
@@ -267,12 +262,13 @@ public class    HitManagerMockImpl implements HitManager {
         }
     }
 
-    private static String findHitIdForHitDownFieldKey(String key){
-        key = StringUtils.substringAfter(key,"DOWN_");
-        key = StringUtils.substringBeforeLast(key,"_");
-        key = StringUtils.substringBeforeLast(key,"_");
+    private static String findHitIdForHitDownFieldKey(String key) {
+        key = StringUtils.substringAfter(key, "DOWN_");
+        key = StringUtils.substringBeforeLast(key, "_");
+        key = StringUtils.substringBeforeLast(key, "_");
         return key;
     }
+
     private void processDownHits(HitStorage hitStorage, Map<String, String> result) {
         Set<String> hitIds = result.keySet().stream()
                 .filter(x -> x.startsWith("DOWN_"))
@@ -283,12 +279,12 @@ public class    HitManagerMockImpl implements HitManager {
 
         for (String hitId : hitIds) {
             DownHitResultStorage downHitResultStorage = hitStorage.getDownHits().get(hitId);
-            System.out.println("All keys: "+result.keySet());
-            System.out.println("hitid "+hitId);
+            System.out.println("All keys: " + result.keySet());
+            System.out.println("hitid " + hitId);
             List<String> scoreFields = result.keySet().stream()
                     .filter(name -> name.startsWith("DOWN_" + hitId + "_score_"))
                     .collect(toList());
-            System.out.println("scorefields "+scoreFields);
+            System.out.println("scorefields " + scoreFields);
 
             List<IdScoreAndEvent> idScoreAndEvents = new ArrayList<>();
             boolean completed = true;

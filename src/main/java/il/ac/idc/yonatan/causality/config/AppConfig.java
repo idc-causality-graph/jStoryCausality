@@ -48,4 +48,11 @@ public class AppConfig {
 
     @Min(1)
     private int causalityReplicaFactor;
+
+    private double upHitReward;
+    private double downHitReward;
+    private double causalityHitReward;
+
+    private int hitLifetimeInMinutes;
+    private int hitDurationInMinutes;
 }
