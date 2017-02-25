@@ -112,7 +112,6 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     public String createCausalityHit(String globalSummary, List<CausalityQuestion> causalityQuestions) {
         String causalityHitHtml = renderHitTemplate("causalityHit.ftl",
                 ImmutableMap.of("globalSummary", globalSummary, "causalityQuestions", causalityQuestions));
-        if (true) return null;
         return createHit(causalityHitHtml, "Decide what is the direct cause of an event",
                 "Read a description of an event, and decide which of the following event are direct cause of it",
                 appConfig.getCausalityHitReward(),
