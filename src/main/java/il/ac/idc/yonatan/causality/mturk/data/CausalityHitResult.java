@@ -12,8 +12,8 @@ import static java.util.stream.Collectors.toSet;
 @Data
 public class CausalityHitResult {
 
-    private boolean hitDone;
 
+    private String assignmentId;
     /**
      * Contains the cause node id->query node id pairs that are a causality edge in the graph
      */

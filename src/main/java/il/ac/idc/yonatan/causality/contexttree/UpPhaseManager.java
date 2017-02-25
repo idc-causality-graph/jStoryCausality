@@ -56,7 +56,8 @@ public class UpPhaseManager implements PhaseManager {
 
         List<Node> nodes = nodeLevel.getNodes();
         for (Node node : nodes) {
-            if (node.getUpHitIds().size() != node.getCompletedUpHitIds().size()) {
+            if (!node.isUpPhaseDone(appConfig.getReplicationFactor())) {
+//            if (node.getUpHitIds().size() != node.getCompletedUpHitIds().size()) {
                 errors.add("Node " + node.getId() + " still need review");
             }
         }
@@ -84,19 +85,20 @@ public class UpPhaseManager implements PhaseManager {
                 }
             }
             //TODO assert that all children have the same number of summaries
-            for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
+//            for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
                 node.setUpHitTaskData(childIdToSummaries);
                 String hitId = hitManager.createUpHit(childIdToSummaries);
-                node.getUpHitIds().add(hitId);
+                node.setUpHitID(hitId);
+//                node.getUpHitIds().add(hitId);
                 saveNeeded = true;
-            }
+//            }
         }
         if (saveNeeded) {
             contextTreeManager.save();
         }
     }
 
-    public void handleUpPhaseReview(String nodeId, String hitId, String summary, boolean hitApproved,
+    public void handleUpPhaseReview(String nodeId, String hitId, String assignmentId, String summary, boolean hitApproved,
                                     String reason, Map<String, Integer> chosenChildrenSummaries) throws IOException {
         Preconditions.checkNotNull(nodeId, "nodeId must not be null");
         Preconditions.checkNotNull(hitId, "hitId must not be null");
@@ -109,7 +111,8 @@ public class UpPhaseManager implements PhaseManager {
 
         if (hitApproved) {
             node.getSummaries().add(summary);
-            node.getCompletedUpHitIds().add(hitId);
+            node.getCompletedUpAssignmentsIds().add(assignmentId);
+//            node.getCompletedUpHitIds().add(hitId);
             for (Node childNode : node.getChildren()) {
                 // this is why children get so many votes.
                 String childId = childNode.getId();
@@ -119,7 +122,7 @@ public class UpPhaseManager implements PhaseManager {
             //Check if all nodes are done in level. If so, perform the next step
             NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
             boolean isAllNodesDone = nodeLevel.getNodes().stream()
-                    .allMatch(Node::isUpPhaseDone);
+                    .allMatch(n->n.isUpPhaseDone(appConfig.getReplicationFactor()));
             if (isAllNodesDone) {
                 contextTree.setUpLevelStep(contextTree.getUpLevelStep() + 1);
                 if (getCurrentUpPhaseNodeLevel(contextTree) == null) {
@@ -129,7 +132,7 @@ public class UpPhaseManager implements PhaseManager {
             }
         }
         contextTreeManager.save();
-        hitManager.submitReviewUpHit(hitId, hitApproved, reason);
+        hitManager.submitReviewUpHit(hitId, assignmentId, hitApproved, reason);
     }
 
     public void choseRootNodeUpHitSummary(int chosenResult) throws IOException {
@@ -162,35 +165,65 @@ public class UpPhaseManager implements PhaseManager {
         }
         List<Node> nodes = nodeLevel.getNodes(); //getNodes(nodeLevel);
         for (Node node : nodes) {
-            List<String> upHitIds = node.getUpHitIds();
-            Set<String> completedUpHitIds = node.getCompletedUpHitIds();
-            for (String upHitId : upHitIds) {
-                if (!completedUpHitIds.contains(upHitId)) {
-                    UpHitReviewData upHitReviewData = new UpHitReviewData();
-                    upHitReviewData.setNodeId(node.getId());
-                    result.add(upHitReviewData);
-                    UpHitResult upHitResult = hitManager.getUpHitForReview(upHitId);
-                    upHitReviewData.setHitDone(upHitResult.isHitDone());
-                    upHitReviewData.setHitId(upHitId);
-                    upHitReviewData.setChosenChildrenSummariesJsonBase64(
-                            getObjectInJsonBase64(upHitResult.getChosenChildrenSummaries()));
-
-                    if (upHitResult.isHitDone()) {
-                        upHitReviewData.setSummary(upHitResult.getHitSummary());
-
-                        LinkedHashMap<String, List<String>> upHitTaskData = node.getUpHitTaskData();
-                        Set<String> childIds = upHitTaskData.keySet();
-                        StringBuilder taskText = new StringBuilder();
-                        for (String childId : childIds) {
-                            Integer chosenSummaryNumber = upHitResult.getChosenChildrenSummaries().get(childId);
-                            String chosenSummary = upHitTaskData.get(childId).get(chosenSummaryNumber);
-                            taskText.append(chosenSummary);
-                            taskText.append("<br>");
-                        }
-                        upHitReviewData.setTaskText(taskText.toString());
-                    }
-                }
+            if (node.isUpPhaseDone(appConfig.getReplicationFactor())){
+                continue;
             }
+            String upHitId=node.getUpHitID();
+            List<UpHitResult> upHitsForReview = hitManager.getUpHitForReview(upHitId);
+            for (UpHitResult upHitForReview : upHitsForReview) {
+                UpHitReviewData upHitReviewData = new UpHitReviewData();
+                result.add(upHitReviewData);
+                upHitReviewData.setNodeId(node.getId());
+                upHitReviewData.setHitId(upHitId);
+                upHitReviewData.setHitDone(true);
+                upHitReviewData.setChosenChildrenSummariesJsonBase64(
+                        getObjectInJsonBase64(upHitForReview.getChosenChildrenSummaries()));
+
+                upHitReviewData.setSummary(upHitForReview.getHitSummary());
+
+                LinkedHashMap<String, List<String>> upHitTaskData = node.getUpHitTaskData();
+                Set<String> childIds = upHitTaskData.keySet();
+                StringBuilder taskText = new StringBuilder();
+                for (String childId : childIds) {
+                    Integer chosenSummaryNumber = upHitForReview.getChosenChildrenSummaries().get(childId);
+                    String chosenSummary = upHitTaskData.get(childId).get(chosenSummaryNumber);
+                    taskText.append(chosenSummary);
+                    taskText.append("<br>");
+                }
+                upHitReviewData.setTaskText(taskText.toString());
+
+            }
+//            String upHitId = node.getUpHitID();
+//
+//            List<String> upHitIds = node.getUpHitIds();
+//            Set<String> completedUpHitIds = node.getCompletedUpHitIds();
+//            for (String upHitId : upHitIds) {
+//                if (!completedUpHitIds.contains(upHitId)) {
+//                    UpHitReviewData upHitReviewData = new UpHitReviewData();
+//                    upHitReviewData.setNodeId(node.getId());
+//                    result.add(upHitReviewData);
+//                    UpHitResult upHitResult = hitManager.getUpHitForReview(upHitId);
+//                    upHitReviewData.setHitDone(upHitResult.isHitDone());
+//                    upHitReviewData.setHitId(upHitId);
+//                    upHitReviewData.setChosenChildrenSummariesJsonBase64(
+//                            getObjectInJsonBase64(upHitResult.getChosenChildrenSummaries()));
+//
+//                    if (upHitResult.isHitDone()) {
+//                        upHitReviewData.setSummary(upHitResult.getHitSummary());
+//
+//                        LinkedHashMap<String, List<String>> upHitTaskData = node.getUpHitTaskData();
+//                        Set<String> childIds = upHitTaskData.keySet();
+//                        StringBuilder taskText = new StringBuilder();
+//                        for (String childId : childIds) {
+//                            Integer chosenSummaryNumber = upHitResult.getChosenChildrenSummaries().get(childId);
+//                            String chosenSummary = upHitTaskData.get(childId).get(chosenSummaryNumber);
+//                            taskText.append(chosenSummary);
+//                            taskText.append("<br>");
+//                        }
+//                        upHitReviewData.setTaskText(taskText.toString());
+//                    }
+//                }
+//            }
         }
         return result;
     }

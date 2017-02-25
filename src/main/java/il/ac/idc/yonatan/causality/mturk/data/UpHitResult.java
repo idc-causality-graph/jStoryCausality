@@ -10,7 +10,7 @@ import java.util.Map;
  */
 @Data
 public class UpHitResult {
-    private boolean hitDone;
+    private String assignmentId;
 
     private String hitSummary;
 

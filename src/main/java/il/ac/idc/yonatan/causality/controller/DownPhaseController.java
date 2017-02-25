@@ -5,6 +5,7 @@ import il.ac.idc.yonatan.causality.contexttree.DownPhaseManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -44,16 +45,18 @@ public class DownPhaseController extends AbsPhaseController {
 
     @PostMapping("contextTree/reviewsDownPhase")
     public String commitReviewDownPhase(@RequestParam Map<String, String> result) throws IOException {
-        Set<String> hitIds = getHitIdsFromMap(result);
+        Set<Pair<String, String>> hitAssignmentIds = getHitIdsFromMap(result);
 
-        for (String hitId : hitIds) {
-            boolean approved = StringUtils.equals(result.get(hitId + "_approve"), "1");
-            String reason = result.get(hitId + "_reason");
-            String nodeId = result.get(hitId + "_nodeid");
-            String hitEncodedData = result.get(hitId+"_data");
+        for (Pair<String, String> hitAssignmentId : hitAssignmentIds) {
+            String hitId = hitAssignmentId.getLeft();
+            String assignmentId = hitAssignmentId.getRight();
+            boolean approved = StringUtils.equals(result.get(assignmentId + "_approve"), "1");
+            String reason = result.get(assignmentId + "_reason");
+            String nodeId = result.get(assignmentId + "_nodeid");
+            String hitEncodedData = result.get(assignmentId+"_data");
             List<Triple<String, Integer, String>> idsAndScoresAndEvents = decodeDataToIdsAndScoresAndEvents(hitEncodedData);
 
-            downPhaseManager.handleDownPhaseReview(nodeId, hitId, approved, reason, idsAndScoresAndEvents);
+            downPhaseManager.handleDownPhaseReview(nodeId, hitId, assignmentId, approved, reason, idsAndScoresAndEvents);
         }
         return "redirect:/contextTree/reviewsDownPhase";
     }

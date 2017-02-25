@@ -68,6 +68,7 @@ import java.security.SignatureException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -115,6 +116,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return createHit(downHitHtml, "Decide what is the most important event",
                 "After reading a summary, you should decide what is the most important event in it",
                 appConfig.getDownHitReward(),
+                appConfig.getReplicationFactor(),
                 newArrayList("summary", "vote"));
     }
 
@@ -125,6 +127,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return createHit(causalityHitHtml, "Decide what is the direct cause of an event",
                 "Read a description of an event, and decide which of the following event are direct cause of it",
                 appConfig.getCausalityHitReward(),
+                appConfig.getCausalityReplicaFactor(),
                 newArrayList("summary", "vote"));
     }
 
@@ -135,12 +138,13 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return createHit(upHitHtml, "Make a summery of text and vote for a summary",
                 "Choose between summaries, and then make a summary of your own",
                 appConfig.getUpHitReward(),
+                appConfig.getReplicationFactor(),
                 newArrayList("writing", "summary", "vote"));
     }
 
     @SneakyThrows
     String createHit(String questionHtml, String title, String description,
-                     double reward, List<String> keywords) {
+                     double reward, int replications, List<String> keywords) {
         CreateHIT createHIT = new CreateHIT();
         long durationInMinutes = appConfig.getHitDurationInMinutes();
         long lifetimeInMinutes = appConfig.getHitLifetimeInMinutes();
@@ -152,6 +156,8 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         chr.setDescription(description);
         chr.setAssignmentDurationInSeconds(TimeUnit.MINUTES.toSeconds(durationInMinutes));
         chr.setLifetimeInSeconds(TimeUnit.MINUTES.toSeconds(lifetimeInMinutes));
+
+        chr.setMaxAssignments(replications);
 
         Price price = new Price();
         price.setAmount(BigDecimal.valueOf(reward));
@@ -268,7 +274,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
 
-    private Assignment getSubmittedAssignment(String hitId) {
+    private List<Assignment> getSubmittedAssignments(String hitId) {
         GetAssignmentsForHIT getAssignmentsForHIT = new GetAssignmentsForHIT();
         setAwsRequestHeaders(getAssignmentsForHIT);
 
@@ -282,75 +288,96 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         GetAssignmentsForHITResponse getAssignmentsForHITResponse = mturkSubmit(getAssignmentsForHIT);
         assertMturkResponse(getAssignmentsForHITResponse, "getAssignmentsForHITResult");
         GetAssignmentsForHITResult getAssignmentsForHITResult = getAssignmentsForHITResponse.getGetAssignmentsForHITResult().get(0);
-        if (getAssignmentsForHITResult.getNumResults() == 0) {
-            return null; //not completed yet
-        }
-
-        return getAssignmentsForHITResult.getAssignment().get(0);
+        return getAssignmentsForHITResult.getAssignment();
     }
 
-    private Map<String, String> getHitAnswers(String hitId) {
-        Assignment assignment = getSubmittedAssignment(hitId);
-        String rawAnswer = assignment.getAnswer();
-        try {
-            Document doc = builder.build(IOUtils.toInputStream(rawAnswer, "UTF-8"));
+    private Map<String, Map<String, String>> getHitAnswers(String hitId) {
+        List<Assignment> assignments = getSubmittedAssignments(hitId);
+        Map<String, Map<String, String>> results = new HashMap<>();
+        for (Assignment assignment : assignments) {
+            String rawAnswer = assignment.getAnswer();
             Map<String, String> questionsAndAnswers = new HashMap<>();
-            for (Element child : doc.getRootElement().getChildren()) {
-                Element qid = child.getChild("QuestionIdentifier", ANSWER_NS);
-                Element ft = child.getChild("FreeText", ANSWER_NS);
-                String question = qid.getTextTrim();
-                String answer = ft.getTextTrim();
-                questionsAndAnswers.put(question, answer);
+            results.put(assignment.getAssignmentId(), questionsAndAnswers);
+            try {
+                Document doc = builder.build(IOUtils.toInputStream(rawAnswer, "UTF-8"));
+                for (Element child : doc.getRootElement().getChildren()) {
+                    Element qid = child.getChild("QuestionIdentifier", ANSWER_NS);
+                    Element ft = child.getChild("FreeText", ANSWER_NS);
+                    String question = qid.getTextTrim();
+                    String answer = ft.getTextTrim();
+                    questionsAndAnswers.put(question, answer);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Cannot parse XML for " + rawAnswer, e);
             }
-            return questionsAndAnswers;
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot parse XML for " + rawAnswer, e);
         }
+        return results;
     }
 
     @Override
-    public UpHitResult getUpHitForReview(String hitId) {
-        Map<String, String> hitAnswers = getHitAnswers(hitId);
-        UpHitResult upHitResult = new UpHitResult();
-        if (hitAnswers == null) {
-            upHitResult.setHitDone(false);
-        } else {
-            upHitResult.setHitDone(true);
+    public List<UpHitResult> getUpHitForReview(String hitId) {
+        Map<String, Map<String, String>> hitAnswers = getHitAnswers(hitId);
 
-            String hitSummary = hitAnswers.get("hitsummary");
+        List<UpHitResult> results = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> entry : hitAnswers.entrySet()) {
+            UpHitResult upHitResult = new UpHitResult();
+            results.add(upHitResult);
+            String assignmentId = entry.getKey();
+            upHitResult.setAssignmentId(assignmentId);
+
+            Map<String, String> assignmentAnswers = entry.getValue();
+
+            String hitSummary = assignmentAnswers.get("hitsummary");
             upHitResult.setHitSummary(hitSummary);
-
-            hitAnswers.keySet().stream()
+            assignmentAnswers.keySet().stream()
                     .filter(key -> !key.equalsIgnoreCase("hitsummary"))
                     .forEach(key ->
                             upHitResult.getChosenChildrenSummaries().put(key,
-                                    Integer.parseInt(hitAnswers.get(key))));
+                                    Integer.parseInt(assignmentAnswers.get(key))));
         }
-        return upHitResult;
+        return results;
+//        UpHitResult upHitResult = new UpHitResult();
+//        if (hitAnswers == null) {
+//            upHitResult.setHitDone(false);
+//        } else {
+//            upHitResult.setHitDone(true);
+//
+//            String hitSummary = hitAnswers.get("hitsummary");
+//            upHitResult.setHitSummary(hitSummary);
+//
+//            hitAnswers.keySet().stream()
+//                    .filter(key -> !key.equalsIgnoreCase("hitsummary"))
+//                    .forEach(key ->
+//                            upHitResult.getChosenChildrenSummaries().put(key,
+//                                    Integer.parseInt(hitAnswers.get(key))));
+//        }
+//        return upHitResult;
     }
 
 
     @Override
-    public DownHitResult getDownHitForReview(String hitId) {
-        DownHitResult downHitResult = new DownHitResult();
-        Map<String, String> hitAnswers = getHitAnswers(hitId);
-        if (hitAnswers == null) {
-            downHitResult.setHitDone(false);
-            return downHitResult;
-        } else {
-            downHitResult.setHitDone(true);
-            Set<String> ids = hitAnswers.keySet().stream()
+    public List<DownHitResult> getDownHitForReview(String hitId) {
+        Map<String, Map<String, String>> hitAnswers = getHitAnswers(hitId);
+
+        List<DownHitResult> results = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> entry : hitAnswers.entrySet()) {
+            DownHitResult downHitResult = new DownHitResult();
+            results.add(downHitResult);
+            String assignmentId = entry.getKey();
+            downHitResult.setAssignmentId(assignmentId);
+            Map<String, String> assignmentAnswers = entry.getValue();
+            Set<String> ids = assignmentAnswers.keySet().stream()
                     .filter(key -> key.endsWith("_event"))
                     .collect(toSet());
 
             for (String id : ids) {
-                String event = hitAnswers.get(id + "_event");
-                String score = hitAnswers.get(id + "_score");
+                String event = assignmentAnswers.get(id + "_event");
+                String score = assignmentAnswers.get(id + "_score");
                 IdScoreAndEvent idScoreAndEvent = new IdScoreAndEvent(id, Integer.parseInt(score), event);
                 downHitResult.getIdsAndScoresAndEvents().add(idScoreAndEvent);
             }
         }
-        return downHitResult;
+        return results;
     }
 
     private List<CauseAndAffect> createCauseAndAffects(String eventKey, String causeIds) {
@@ -365,15 +392,19 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     @Override
-    public CausalityHitResult getCausalityHitForReview(String hitId) {
-        CausalityHitResult causalityHitResult = new CausalityHitResult();
-        Map<String, String> hitAnswers = getHitAnswers(hitId);
-        if (hitAnswers == null) {
-            causalityHitResult.setHitDone(false);
-        } else {
-            causalityHitResult.setHitDone(true);
+    public List<CausalityHitResult> getCausalityHitForReview(String hitId) {
+        Map<String, Map<String, String>> hitAnswers = getHitAnswers(hitId);
 
-            Set<String> keys = hitAnswers.keySet()
+        List<CausalityHitResult> results = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> entry : hitAnswers.entrySet()) {
+            CausalityHitResult causalityHitResult = new CausalityHitResult();
+            results.add(causalityHitResult);
+            String assignmentId = entry.getKey();
+            causalityHitResult.setAssignmentId(assignmentId);
+            Map<String, String> assignmentAnswers = entry.getValue();
+
+
+            Set<String> keys = assignmentAnswers.keySet()
                     .stream()
                     .filter(key -> key.endsWith("_causes"))
                     .map(key -> StringUtils.substringBeforeLast(key, "_causes"))
@@ -381,14 +412,13 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
 
             System.out.println(hitAnswers);
             for (String key : keys) {
-                String causes = hitAnswers.get(key + "_causes").trim();
-                String noncauses = hitAnswers.get(key + "_noncauses").trim();
-                System.out.println();
+                String causes = assignmentAnswers.get(key + "_causes").trim();
+                String noncauses = assignmentAnswers.get(key + "_noncauses").trim();
                 causalityHitResult.getCauseAndAffects().addAll(createCauseAndAffects(key, causes));
                 causalityHitResult.getNonCauseAndAffects().addAll(createCauseAndAffects(key, noncauses));
             }
         }
-        return causalityHitResult;
+        return results;
     }
 
 
@@ -409,12 +439,12 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         }
     }
 
-    private void submitHitReview(String hitId, boolean hitApproved, String reason) {
-        Assignment assignment = getSubmittedAssignment(hitId);
-        if (assignment == null) {
-            throw new RuntimeException("Missing submitted assignment for hit " + hitId);
-        }
-        String assignmentId = assignment.getAssignmentId();
+    private void submitHitReview(String hitId, String assignmentId, boolean hitApproved, String reason) {
+//        Assignment assignment = getSubmittedAssignment(hitId);
+//        if (assignment == null) {
+//            throw new RuntimeException("Missing submitted assignment for hit " + hitId);
+//        }
+//        String assignmentId = assignment.getAssignmentId();
         if (hitApproved) {
             ApproveAssignment approveAssignment = new ApproveAssignment();
             setAwsRequestHeaders(approveAssignment);
@@ -445,18 +475,18 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     @Override
-    public void submitReviewUpHit(String hitId, boolean hitApproved, String reason) {
-        submitHitReview(hitId, hitApproved, reason);
+    public void submitReviewUpHit(String hitId, String assignmentId, boolean hitApproved, String reason) {
+        submitHitReview(hitId, assignmentId, hitApproved, reason);
     }
 
     @Override
-    public void submitDownHitReview(String hitId, boolean hitApproved, String reason) {
-        submitHitReview(hitId, hitApproved, reason);
+    public void submitDownHitReview(String hitId, String assignmentId, boolean hitApproved, String reason) {
+        submitHitReview(hitId, assignmentId, hitApproved, reason);
     }
 
     @Override
-    public void submitCausalityHitReview(String hitId, boolean hitApproved, String reason) {
-        submitHitReview(hitId, hitApproved, reason);
+    public void submitCausalityHitReview(String hitId, String assignmentId, boolean hitApproved, String reason) {
+        submitHitReview(hitId, assignmentId, hitApproved, reason);
     }
 
 

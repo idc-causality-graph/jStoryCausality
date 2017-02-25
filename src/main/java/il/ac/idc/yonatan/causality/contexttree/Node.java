@@ -36,17 +36,26 @@ public class Node {
     @Setter(AccessLevel.NONE)
     private List<String> summaries = new ArrayList<>();
 
-    @Setter(AccessLevel.NONE)
-    private List<String> upHitIds = new ArrayList<>();
+    private String upHitID;
+//    @Setter(AccessLevel.NONE)
+//    private List<String> upHitIds = new ArrayList<>();
+
+    private String downHitId;
 
     @Setter(AccessLevel.NONE)
-    private List<String> downHitIds = new ArrayList<>();
+    private Set<String> completedDownAssignmentsIds = new HashSet<>();
 
     @Setter(AccessLevel.NONE)
-    private Set<String> completedUpHitIds = new HashSet<>();
+    private Set<String> completedUpAssignmentsIds = new HashSet<>();
 
-    @Setter(AccessLevel.NONE)
-    private Set<String> completedDownHitIds = new HashSet<>();
+//    @Setter(AccessLevel.NONE)
+//    private List<String> downHitIds = new ArrayList<>();
+//
+//    @Setter(AccessLevel.NONE)
+//    private Set<String> completedUpHitIds = new HashSet<>();
+//
+//    @Setter(AccessLevel.NONE)
+//    private Set<String> completedDownHitIds = new HashSet<>();
 
     /**
      * Data related to constructing causalityGraph
@@ -88,9 +97,16 @@ public class Node {
     @Setter(AccessLevel.NONE)
     private List<Double> eventImportanceWorkerNormalizedScores = new ArrayList<>();
 
-    public boolean isDownPhaseDone() {
+    public boolean isDownPhaseDone(int repFactor) {
         //No down phase for leafs.
-        return isLeaf()|| (downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
+        return isLeaf()|| (completedDownAssignmentsIds.size()==repFactor);
+//                downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
+    }
+
+    public boolean isUpPhaseDone(int repFactor) {
+        //No down phase for leafs.
+        return isLeaf()|| (completedUpAssignmentsIds.size()==repFactor);
+//                downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
     }
 
     private List<String> childIds = new ArrayList<>();
@@ -107,9 +123,9 @@ public class Node {
         return getNode(parentNodeId);
     }
 
-    public boolean isUpPhaseDone() {
-        return upHitIds.size() > 0 && upHitIds.size() == completedUpHitIds.size();
-    }
+//    public boolean isUpPhaseDone() {
+//        return upHitIds.size() > 0 && upHitIds.size() == completedUpHitIds.size();
+//    }
 
 
     /**

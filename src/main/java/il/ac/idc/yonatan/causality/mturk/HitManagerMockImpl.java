@@ -1,6 +1,7 @@
 package il.ac.idc.yonatan.causality.mturk;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import il.ac.idc.yonatan.causality.config.AppConfig;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
 import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import mturk.wsdl.AssignmentStatus;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,11 +55,12 @@ import static java.util.stream.Collectors.toSet;
 public class HitManagerMockImpl implements HitManager {
 
     private static final File DB = new File("./hit-storage.json");
-
-    private ObjectMapper objectMapper;
+    private final AppConfig appConfig;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public HitManagerMockImpl(ObjectMapper objectMapper) {
+    public HitManagerMockImpl(ObjectMapper objectMapper, AppConfig appConfig) {
+        this.appConfig = appConfig;
         this.objectMapper = objectMapper;
     }
 
@@ -103,6 +106,7 @@ public class HitManagerMockImpl implements HitManager {
         @Setter(AccessLevel.NONE)
         private List<CausalityQuestion> causalityQuestions = new ArrayList<>();
         private String globalSummary;
+        private AssignmentStatus assignmentStatus;
         @Setter(AccessLevel.NONE)
         private CausalityHitResult causalityHitResult;
     }
@@ -112,6 +116,7 @@ public class HitManagerMockImpl implements HitManager {
     @NoArgsConstructor
     public static class UpHitResultStorage {
         private UpHitResult upHitResult;
+        private AssignmentStatus assignmentStatus;
         private LinkedHashMap<String, List<String>> childIdToSummaries;
     }
 
@@ -120,6 +125,7 @@ public class HitManagerMockImpl implements HitManager {
     @NoArgsConstructor
     public static class DownHitResultStorage {
         private DownHitResult downHitResult;
+        private AssignmentStatus assignmentStatus;
         private boolean leaf;
         private List<String> parentsSummaries;
         private List<Pair<String, String>> childrenIdsAndSummaries;
@@ -129,8 +135,7 @@ public class HitManagerMockImpl implements HitManager {
         String hitId = "HIT-" + RandomStringUtils.randomAlphanumeric(8);
         HitStorage hitStorage = readDb();
         UpHitResult upHitResult = new UpHitResult();
-        upHitResult.setHitDone(false);
-        UpHitResultStorage upHitResultStorage = new UpHitResultStorage(upHitResult, childIdToSummaries);
+        UpHitResultStorage upHitResultStorage = new UpHitResultStorage(upHitResult, null, childIdToSummaries);
         hitStorage.getUpHits().put(hitId, upHitResultStorage);
         saveDb(hitStorage);
         return hitId;
@@ -143,7 +148,8 @@ public class HitManagerMockImpl implements HitManager {
         //than will ask all questions in hit question (in real world - twice, and random causes order)
         HitStorage db = readDb();
         String hitId = "C_HIT-" + RandomStringUtils.randomAlphanumeric(8);
-        CausalityResultStorage crs = new CausalityResultStorage(causalityHitQuestions, globalSummary, new CausalityHitResult());
+        CausalityResultStorage crs = new CausalityResultStorage(causalityHitQuestions, globalSummary, null,
+                new CausalityHitResult());
         db.getCausalityHits().put(hitId, crs);
         saveDb(db);
         return hitId;

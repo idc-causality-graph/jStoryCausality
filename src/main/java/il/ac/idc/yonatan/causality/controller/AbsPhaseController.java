@@ -3,6 +3,7 @@ package il.ac.idc.yonatan.causality.controller;
 import il.ac.idc.yonatan.causality.contexttree.PhaseManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
@@ -13,10 +14,16 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbsPhaseController {
-    Set<String> getHitIdsFromMap(Map<String, String> result) {
+    /**
+     *
+     * @param result
+     * @return Pair of HitID,AssignmentId
+     */
+    Set<Pair<String,String>> getHitIdsFromMap(Map<String, String> result) {
         return result.keySet().stream()
                 .filter(x -> x.endsWith("_approve"))
                 .map(x -> StringUtils.substringBeforeLast(x, "_approve"))
+                .map(x-> Pair.of(StringUtils.substringBefore(x,":"),StringUtils.substringAfter(x,":")))
                 .collect(Collectors.toSet());
     }
 

@@ -5,6 +5,7 @@ import il.ac.idc.yonatan.causality.contexttree.CausalityPhaseManager;
 import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -42,19 +43,21 @@ public class CausalityPhaseController extends AbsPhaseController {
 
     @PostMapping("contextTree/reviewsCausalityPhase")
     public String commitReviewCausalityPhase(@RequestParam Map<String, String> result) throws IOException {
-        Set<String> hitIds = getHitIdsFromMap(result);
+        Set<Pair<String, String>> hitAssignmentIds = getHitIdsFromMap(result);
 
-        for (String hitId : hitIds) {
-            boolean approved = StringUtils.equals(result.get(hitId + "_approve"), "1");
-            String reason = result.get(hitId + "_reason");
-            String pairString = result.get(hitId + "_pairs");
+        for (Pair<String, String> hitAssignmentId : hitAssignmentIds) {
+            String hitId = hitAssignmentId.getLeft();
+            String assignmentId = hitAssignmentId.getRight();
+            boolean approved = StringUtils.equals(result.get(assignmentId + "_approve"), "1");
+            String reason = result.get(assignmentId + "_reason");
+            String pairString = result.get(assignmentId + "_pairs");
             String[] pairs = StringUtils.split(pairString, ";");
             List<CauseAndAffect> causeAndAffects = new ArrayList<>();
             for (String pair : pairs) {
                 String[] split = StringUtils.split(pair, ":");
                 causeAndAffects.add(new CauseAndAffect(split[1], split[0]));
             }
-            causalityPhaseManager.handleCausalityPhaseReview(hitId, approved, reason, causeAndAffects);
+            causalityPhaseManager.handleCausalityPhaseReview(hitId, assignmentId, approved, reason, causeAndAffects);
         }
         return "redirect:/contextTree/reviewsCausalityPhase";
     }

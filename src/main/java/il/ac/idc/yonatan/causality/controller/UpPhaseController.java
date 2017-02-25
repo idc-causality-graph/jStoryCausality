@@ -7,6 +7,7 @@ import il.ac.idc.yonatan.causality.contexttree.UpHitReviewData;
 import il.ac.idc.yonatan.causality.contexttree.UpPhaseManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -37,22 +38,23 @@ public class UpPhaseController extends AbsPhaseController {
 
     @PostMapping(value = "contextTree/reviewsUpPhase")
     public String commitReviewUpPhase(@RequestParam Map<String, String> result) throws IOException {
-        Set<String> hitIds = getHitIdsFromMap(result);
-
-        for (String hitId : hitIds) {
-            boolean approved = StringUtils.equals(result.get(hitId + "_approve"), "1");
-            String reason = result.get(hitId + "_reason");
-            String nodeId = result.get(hitId + "_nodeid");
-            String summaryBase64 = result.get(hitId + "_summary");
+        Set<Pair<String, String>> hitAssignmentIds = getHitIdsFromMap(result);
+        for (Pair<String, String> hitAssignmentId : hitAssignmentIds) {
+            String hitId = hitAssignmentId.getLeft();
+            String assignmentId = hitAssignmentId.getRight();
+            boolean approved = StringUtils.equals(result.get(assignmentId + "_approve"), "1");
+            String reason = result.get(assignmentId + "_reason");
+            String nodeId = result.get(assignmentId + "_nodeid");
+            String summaryBase64 = result.get(assignmentId + "_summary");
             Map<String, Integer> chosenChildrenSummaries =
-                    getChosenChildrenSummariesFromParam(result.get(hitId + "_chosenChildrenSummaries"));
+                    getChosenChildrenSummariesFromParam(result.get(assignmentId + "_chosenChildrenSummaries"));
             String summary;
             if (StringUtils.isNotEmpty(summaryBase64)) {
                 summary = new String(Base64.getDecoder().decode(summaryBase64));
             } else {
                 summary = null;
             }
-            upPhaseManager.handleUpPhaseReview(nodeId, hitId, summary, approved, reason, chosenChildrenSummaries);
+            upPhaseManager.handleUpPhaseReview(nodeId, hitId, assignmentId, summary, approved, reason, chosenChildrenSummaries);
         }
         return "redirect:/contextTree/reviewsUpPhase";
     }

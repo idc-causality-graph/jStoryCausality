@@ -40,6 +40,8 @@ public class ContextTree {
     private Set<String> causalityHits = new HashSet<>();
     @Setter(AccessLevel.NONE)
     private Set<String> completedCausalityHits = new HashSet<>();
+    @Setter(AccessLevel.NONE)
+    private Map<String,Set<String>> completedCausalityAssignmentsByHit = new HashMap<>();
     private int upLevelStep;
     private Phases phase;
     private int causalityLevelStep;

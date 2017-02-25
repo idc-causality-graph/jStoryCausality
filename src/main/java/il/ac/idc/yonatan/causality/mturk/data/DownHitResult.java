@@ -11,6 +11,6 @@ import java.util.List;
  */
 @Data
 public class DownHitResult {
-    private boolean hitDone;
+    private String assignmentId;
     private List<IdScoreAndEvent> idsAndScoresAndEvents = new ArrayList<>();
 }

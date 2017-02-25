@@ -114,7 +114,7 @@ public class CausalityPhaseManager implements PhaseManager {
      * Out of every B query nodes, create a single HIT - which asks for to check all actual causes out of the cause nodes.
      */
     public void createHits() throws IOException {
-        int r = appConfig.getCausalityReplicaFactor();
+//        int r = appConfig.getCausalityReplicaFactor();
         int b = appConfig.getBranchFactor();
 
         ContextTree contextTree = contextTreeManager.getContextTree();
@@ -165,10 +165,10 @@ public class CausalityPhaseManager implements PhaseManager {
             // partitionedQueryToPotCause contains no more than b pairs!
             List<CausalityQuestion> causalityHitQuestions = createCausalityHitQuestions(questionsData);
             String globalSummary = rootNode.getBestSummary();
-            for (int i = 0; i < r; i++) {
-                String hitId = hitManager.createCausalityHit(globalSummary, causalityHitQuestions);
-                contextTree.getCausalityHits().add(hitId);
-            }
+//            for (int i = 0; i < r; i++) {
+            String hitId = hitManager.createCausalityHit(globalSummary, causalityHitQuestions);
+            contextTree.getCausalityHits().add(hitId);
+//            }
         }
         contextTreeManager.save();
     }
@@ -225,35 +225,39 @@ public class CausalityPhaseManager implements PhaseManager {
             // this hit contains more than one query node, and of each query node more than one cause.
             // this code turn in into map from query node to list of causes and non causes.
             CausalityHitReviewData causalityHitReviewData = new CausalityHitReviewData();
-            CausalityHitResult causalityHitResult = hitManager.getCausalityHitForReview(uncompletedCausalityHit);
-            causalityHitReviewData.setHitDone(causalityHitResult.isHitDone());
-            causalityHitReviewData.setHitId(uncompletedCausalityHit);
+            List<CausalityHitResult> causalityHitResults = hitManager.getCausalityHitForReview(uncompletedCausalityHit);
 
-            // The assumption is that the node ID contains a version (i.e. 1234_0 or 1234_1 for nodeid 1234)
-            // and both appear in the cause or noncause
-            Multimap<String, String> queryToCauses = queryToCausesNodeIds(causalityHitResult.getCauseAndAffects());
-            Multimap<String, String> queryToNonCauses = queryToCausesNodeIds(causalityHitResult.getNonCauseAndAffects());
+            for (CausalityHitResult causalityHitResult : causalityHitResults) {
+                causalityHitReviewData.setHitDone(true);
+                causalityHitReviewData.setHitId(uncompletedCausalityHit);
 
-            // If queryToCause / queryToNonCause return null, there's a conflict in the answer, and should be rejected
-            if (queryToCauses == null || queryToNonCauses == null) {
-                causalityHitReviewData.setConsistentAnswers(false);
-            } else {
-                causalityHitReviewData.setConsistentAnswers(true);
-                Map<String, CausalityHitReviewData.CausalityData> queryNodeIdToCausalityData = new HashMap<>();
-                List<CausalityHitReviewData.CausalityData> resultCauses =
-                        convertToCausalityData(contextTree, queryToCauses, queryNodeIdToCausalityData, true);
-                List<CausalityHitReviewData.CausalityData> resultNonCauses =
-                        convertToCausalityData(contextTree, queryToNonCauses, queryNodeIdToCausalityData, false);
+                // The assumption is that the node ID contains a version (i.e. 1234_0 or 1234_1 for nodeid 1234)
+                // and both appear in the cause or noncause
+                Multimap<String, String> queryToCauses = queryToCausesNodeIds(causalityHitResult.getCauseAndAffects());
+                Multimap<String, String> queryToNonCauses = queryToCausesNodeIds(causalityHitResult.getNonCauseAndAffects());
 
-                causalityHitReviewData.getCausalityDataList().addAll(resultCauses);
-                causalityHitReviewData.getCausalityDataList().addAll(resultNonCauses);
+                // If queryToCause / queryToNonCause return null, there's a conflict in the answer, and should be rejected
+                if (queryToCauses == null || queryToNonCauses == null) {
+                    causalityHitReviewData.setConsistentAnswers(false);
+                } else {
+                    causalityHitReviewData.setConsistentAnswers(true);
+                    Map<String, CausalityHitReviewData.CausalityData> queryNodeIdToCausalityData = new HashMap<>();
+                    List<CausalityHitReviewData.CausalityData> resultCauses =
+                            convertToCausalityData(contextTree, queryToCauses, queryNodeIdToCausalityData, true);
+                    List<CausalityHitReviewData.CausalityData> resultNonCauses =
+                            convertToCausalityData(contextTree, queryToNonCauses, queryNodeIdToCausalityData, false);
+
+                    causalityHitReviewData.getCausalityDataList().addAll(resultCauses);
+                    causalityHitReviewData.getCausalityDataList().addAll(resultNonCauses);
+                }
+                causalityHitReviewDataList.add(causalityHitReviewData);
             }
-            causalityHitReviewDataList.add(causalityHitReviewData);
+
         }
         return causalityHitReviewDataList;
     }
 
-    public void handleCausalityPhaseReview(String hitId, boolean approved, String reason, List<CauseAndAffect> causeAndAffects)
+    public void handleCausalityPhaseReview(String hitId, String assignmentId, boolean approved, String reason, List<CauseAndAffect> causeAndAffects)
             throws IOException {
         if (approved) {
             ContextTree contextTree = contextTreeManager.getContextTree();
@@ -263,14 +267,18 @@ public class CausalityPhaseManager implements PhaseManager {
                 Node causeNode = contextTree.getNode(causeNodeId);
                 causeNode.getCausalityData().getTargetNodeIds().add(queryNodeId);
             }
-            contextTree.getCompletedCausalityHits().add(hitId);
+            Set<String> completedAssignments = contextTree.getCompletedCausalityAssignmentsByHit().getOrDefault(hitId, new HashSet<>());
+            completedAssignments.add(assignmentId);
+            if (completedAssignments.size() == appConfig.getCausalityReplicaFactor()) {
+                contextTree.getCompletedCausalityHits().add(hitId);
+            }
             if (contextTree.getCausalityLevelStep() == 0 && contextTree.getUncompletedCausalityHits().isEmpty()) {
                 // Finished last HIT in the leaf level
                 contextTree.setPhase(Phases.DONE);
             }
             contextTreeManager.save();
         }
-        hitManager.submitCausalityHitReview(hitId, approved, reason);
+        hitManager.submitCausalityHitReview(hitId, assignmentId, approved, reason);
     }
 
     /**
