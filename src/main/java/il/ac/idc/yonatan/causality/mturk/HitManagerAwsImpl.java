@@ -1,8 +1,8 @@
 package il.ac.idc.yonatan.causality.mturk;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.Configuration;
@@ -11,6 +11,7 @@ import freemarker.template.TemplateException;
 import il.ac.idc.yonatan.causality.config.AppConfig;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.CausalityQuestion;
+import il.ac.idc.yonatan.causality.mturk.data.CauseAndAffect;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.IdScoreAndEvent;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
@@ -67,6 +68,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 @Service
 @Slf4j
 @Profile("aws")
@@ -100,17 +105,18 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return createHit(downHitHtml, "Decide what is the most important event",
                 "After reading a summary, you should decide what is the most important event in it",
                 appConfig.getDownHitReward(),
-                Lists.newArrayList("summary", "vote"));
+                newArrayList("summary", "vote"));
     }
 
     @Override
     public String createCausalityHit(String globalSummary, List<CausalityQuestion> causalityQuestions) {
         String causalityHitHtml = renderHitTemplate("causalityHit.ftl",
                 ImmutableMap.of("globalSummary", globalSummary, "causalityQuestions", causalityQuestions));
+        if (true) return null;
         return createHit(causalityHitHtml, "Decide what is the direct cause of an event",
                 "Read a description of an event, and decide which of the following event are direct cause of it",
                 appConfig.getCausalityHitReward(),
-                Lists.newArrayList("summary", "vote"));
+                newArrayList("summary", "vote"));
     }
 
     @Override
@@ -120,7 +126,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return createHit(upHitHtml, "Make a summery of text and vote for a summary",
                 "Choose between summaries, and then make a summary of your own",
                 appConfig.getUpHitReward(),
-                Lists.newArrayList("writing", "summary", "vote"));
+                newArrayList("writing", "summary", "vote"));
     }
 
     @SneakyThrows
@@ -332,7 +338,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
             downHitResult.setHitDone(true);
             Set<String> ids = hitAnswers.keySet().stream()
                     .filter(key -> key.endsWith("_event"))
-                    .collect(Collectors.toSet());
+                    .collect(toSet());
 
             for (String id : ids) {
                 String event = hitAnswers.get(id + "_event");
@@ -344,21 +350,36 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return downHitResult;
     }
 
+    private List<CauseAndAffect> createCauseAndAffects(String eventKey, String causeIds) {
+        return Splitter.on(":").splitToList(causeIds)
+                .stream()
+                .map(causeId -> new CauseAndAffect(causeId, eventKey))
+                .collect(toList());
+    }
+
     @Override
     public CausalityHitResult getCausalityHitForReview(String hitId) {
         CausalityHitResult causalityHitResult = new CausalityHitResult();
         Map<String, String> hitAnswers = getHitAnswers(hitId);
         if (hitAnswers == null) {
             causalityHitResult.setHitDone(false);
-            return causalityHitResult;
+        } else {
+            causalityHitResult.setHitDone(true);
+
+            Set<String> keys = hitAnswers.keySet()
+                    .stream()
+                    .filter(key -> key.endsWith("_causes"))
+                    .map(key -> StringUtils.substringBeforeLast(key, "_causes"))
+                    .collect(toSet());
+
+            for (String key : keys) {
+                String causes = hitAnswers.get(key + "_causes");
+                String noncauses = hitAnswers.get(key + "+noncauses");
+                causalityHitResult.getCauseAndAffects().addAll(createCauseAndAffects(key, causes));
+                causalityHitResult.getNonCauseAndAffects().addAll(createCauseAndAffects(key, noncauses));
+            }
         }
-        return null;
-//        CauseAndAffect causeAndAffect=new CauseAndAffect()
-//        causalityHitResult.getNonCauseAndAffects()
-//        causalityHitResult.getCauseAndAffects().
-//
-//
-//        return null;
+        return causalityHitResult;
     }
 
     private void submitHitReview(String hitId, boolean hitApproved, String reason) {

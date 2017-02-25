@@ -60,6 +60,12 @@
                 } else {
                     error.insertAfter(element);
                 }
+            },
+            submitHandler: function(form) {
+                if (typeof(submitHandler) == 'function') {
+                    submitHandler();
+                }
+                form.submit();
             }
         });
     });

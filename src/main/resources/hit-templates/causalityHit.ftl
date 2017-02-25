@@ -11,19 +11,47 @@
             $("input").attr("disabled", true);
             $("textarea").attr("disabled", true);
         }
-        $(function () {
-            $("input.none-of-the-above").click(function () {
-                var $this = $(this);
-                var groupName = $this.attr("name");
-                $("input[name='" + groupName + "']:not(.none-of-the-above)").prop('checked', false);
-            });
-            $("input:not(.none-of-the-above)").click(function () {
-                var $this = $(this);
-                var groupName = $this.attr("name");
-                $("input[name='" + groupName + "'].none-of-the-above").prop('checked', false);
-            });
+        function getCauseInputs(groupName) {
+            return $("input[name='" + groupName + "']:not(.none-of-the-above)");
+        }
+        function getNoneOfTheAboveInputs(groupName) {
+            return $("input[name='" + groupName + "'].none-of-the-above");
+        }
 
-        })
+        function submitHandler() {
+            var inputs = $("input[type='checkbox'].none-of-the-above");
+            inputs.each(function (i, input) {
+                var $input = $(input);
+                var groupName = $input.attr("name");
+                var nonGroupName = groupName.substr(0, groupName.length - 2);
+                var causes = [],
+                        noncauses = [];
+                getCauseInputs(groupName).each(function (i, cInput) {
+                    var $cInput = $(cInput);
+                    var id = $cInput.val();
+                    console.log($cInput.val(), $cInput.prop("checked"));
+                    if ($cInput.prop("checked")) {
+                        causes.push(id);
+                    } else {
+                        noncauses.push(id);
+                    }
+                });
+                $("#" + nonGroupName + "_causes").val(causes.join(":"));
+                $("#" + nonGroupName + "_noncauses").val(noncauses.join(":"));
+            });
+        }
+        $(function () {
+            $("input[type='checkbox'].none-of-the-above").click(function () {
+                var $this = $(this);
+                var groupName = $this.attr("name");
+                getCauseInputs(groupName).prop('checked', false);
+            });
+            $("input[type='checkbox']:not(.none-of-the-above)").click(function () {
+                var $this = $(this);
+                var groupName = $this.attr("name");
+                getNoneOfTheAboveInputs(groupName).prop('checked', false);
+            });
+        });
     </script>
 </head>
 <body>
@@ -116,7 +144,8 @@
                                      class="text-danger"
                                      style="display: none">
                                 </div>
-                            <#--</ul>-->
+                                <input type="hidden" id="${questionNodeId}_causes" name="${questionNodeId}_causes">
+                                <input type="hidden" id="${questionNodeId}_noncauses" name="${questionNodeId}_noncauses">
                                 <#sep >
                                     <hr/></#sep>
                             </#list>
