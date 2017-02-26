@@ -17,10 +17,14 @@ public class ContextTreeHtml {
     private StringBuilder output;
     private boolean isRoot;
     private Template template;
+    private int repFactor;
+    private int causRepFactor;
 
     @SneakyThrows
-    public ContextTreeHtml(ContextTree contextTree, Configuration freeMarkerConfig) {
+    public ContextTreeHtml(ContextTree contextTree, Configuration freeMarkerConfig, int repFactor, int causRepFactor) {
         this.contextTree = contextTree;
+        this.repFactor = repFactor;
+        this.causRepFactor = causRepFactor;
         this.template = freeMarkerConfig.getTemplate("nodeCard.ftl");
     }
 
@@ -28,6 +32,8 @@ public class ContextTreeHtml {
     private String nodeToHtml(Node node) {
         Map<String, Object> fmContext = new HashMap<>();
         fmContext.put("node", node);
+        fmContext.put("repFactor", repFactor);
+        fmContext.put("causRepFactor", causRepFactor);
         StringWriter writer = new StringWriter();
         template.process(fmContext, writer);
         return writer.toString();

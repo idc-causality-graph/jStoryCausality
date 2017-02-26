@@ -25,17 +25,20 @@
                 <a class="p-2 btn btn-info" href="">Reload</a>
             </div>
         </div>
-    <#list hitStorage.upHits as hitId, upHit>
+    <#list hitStorage.upHitStorage as hitId, upHit>
+        <#list upHit.upAssignments as upAssignment>
+        <#assign hitAssignmentId = hitId + ':' + upAssignment.upHitResult.assignmentId>
+        <#if (!upAssignment.closed)>
         <div class="card mb-5">
-            <div class="card-header card-${upHit.upHitResult.hitDone?then('secondary','primary card-inverse')} ">
-                HIT Id ${hitId}
+            <div class="card-header card-${(upAssignment.done)?then('secondary','primary card-inverse')} ">
+                HIT Id ${hitAssignmentId}
             </div>
             <div class="card-block">
                 <div class="form-group row">
                     <label class="col-form-label col-sm-2">Suggested summary</label>
                     <textarea class="form-control col-sm-10"
                               autocomplete="off"
-                              name="${hitId}_hitsummary">${upHit.upHitResult.hitSummary!""}</textarea>
+                              name="${hitAssignmentId}_hitsummary">${upAssignment.upHitResult.hitSummary!""}</textarea>
                 </div>
 
                 <label>Choose best summary</label>
@@ -51,10 +54,10 @@
                                         <label class="form-check-label">
                                             <input class="form-check-input"
                                                    type="radio"
-                                                   name="${hitId}_${childId}"
+                                                   name="${hitAssignmentId}_${childId}"
                                                    value="${summary?index}"
-                                                <#if upHit.upHitResult.chosenChildrenSummaries[childId]??>
-                                                   <#if upHit.upHitResult.chosenChildrenSummaries[childId]==summary?index>checked</#if>
+                                                <#if upAssignment.upHitResult.chosenChildrenSummaries[childId]??>
+                                                   <#if upAssignment.upHitResult.chosenChildrenSummaries[childId]==summary?index>checked</#if>
                                                 </#if>>
                                         ${summary}
                                         </label>
@@ -66,12 +69,17 @@
                 </#list>
             </div>
         </div>
+        </#if>
+        </#list>
     </#list>
 
-    <#list hitStorage.downHits as hitId, downHit>
+    <#list hitStorage.downHitStorage as hitId, downHit>
+        <#list downHit.downAssignments as downAssignment>
+        <#assign hitAssignmentId = hitId + ':' +downAssignment.downHitResult.assignmentId>
+        <#if (!downAssignment.closed)>
         <div class="card mb-5">
-            <div class="card-header card-${downHit.downHitResult.hitDone?then('secondary','primary card-inverse')} ">
-                HIT Id ${hitId}
+            <div class="card-header card-${downAssignment.done?then('secondary','primary card-inverse')} ">
+                HIT Id ${hitAssignmentId}
             </div>
             <div class="card-block">
                 <label>Parents' summaries</label>
@@ -84,9 +92,9 @@
                 <label>Events and scores</label>
                 <ul>
                     <#list downHit.childrenIdsAndSummaries as childIdAndSummary>
-                        <#if downHit.downHitResult.idsAndScoresAndEvents??>
-                            <#assign given_score = downHit.downHitResult.idsAndScoresAndEvents[childIdAndSummary?index].score>
-                            <#assign event = downHit.downHitResult.idsAndScoresAndEvents[childIdAndSummary?index].mostImportantEvent>
+                        <#if downAssignment.downHitResult.idsAndScoresAndEvents??>
+                            <#assign given_score = downAssignment.downHitResult.idsAndScoresAndEvents[childIdAndSummary?index].score>
+                            <#assign event = downAssignment.downHitResult.idsAndScoresAndEvents[childIdAndSummary?index].mostImportantEvent>
                         <#else>
                             <#assign event = "">
                             <#assign given_score = -1>
@@ -99,7 +107,7 @@
                         <div class="form-group row">
                             <label class="col-form-label col-sm-2">Most important event</label>
                             <div class="col-sm-10">
-                                <textarea name="DOWN_${hitId}_event_${childIdAndSummary?index}"
+                                <textarea name="${hitAssignmentId}_event_${childIdAndSummary?index}"
                                           autocomplete="off" class="form-control "
                                 >${event}</textarea>
                             </div>
@@ -113,7 +121,7 @@
                                         <label class="form-check-label">
                                             <input class="form-check-input" type="radio"
                                                 <#if given_score??>${(given_score==rate)?then('checked','')}</#if>
-                                                   name="DOWN_${hitId}_score_${childIdAndSummary?index}"
+                                                   name="${hitAssignmentId}_score_${childIdAndSummary?index}"
                                                    value="${rate}">
                                         ${rate}
                                         </label>
@@ -121,22 +129,25 @@
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" name="DOWN_${hitId}_nodeid_${childIdAndSummary?index}"
+                        <input type="hidden" name="${hitAssignmentId}_nodeid_${childIdAndSummary?index}"
                                value="${childIdAndSummary.left}">
                         <#sep >
                             <hr/>
                     </#list>
                 </ul>
-
-
             </div>
         </div>
+        </#if>
+        </#list>
     </#list>
 
-    <#list hitStorage.causalityHits as hitId, causalityHit>
+    <#list hitStorage.causalityHitStorage as hitId, causalityHit>
+        <#list causalityHit.causalityAssignments as causalityAssignment>
+        <#assign hitAssignmentId = hitId + ':' +causalityAssignment.causalityHitResult.assignmentId>
+        <#if (!causalityAssignment.closed)>
         <div class="card mb-5">
-            <div class="card-header card-${causalityHit.causalityHitResult.hitDone?then('secondary','primary card-inverse')} ">
-                HIT Id ${hitId}
+            <div class="card-header card-${causalityAssignment.done?then('secondary','primary card-inverse')} ">
+                HIT Id ${hitAssignmentId}
             </div>
             <div class="card-block">
                 <div class="form-group row">
@@ -160,10 +171,10 @@
                             <#list causalityQuestion.causes as cause>
                                 <div class="form-check">
                                     <label class="form-check-label">
-                                        <#assign inputName='CAUS_'+hitId+':'+questionNodeId+':'+cause.nodeId>
+                                        <#assign inputName=hitAssignmentId+';'+questionNodeId+';'+cause.nodeId>
                                         <input type="hidden" value="off" name="${inputName}">
                                         <input type="checkbox" class="form-check-input"
-                                        ${causalityHit.causalityHitResult.causeNodeIds?seq_contains(questionNodeId+':'+cause.nodeId)?then('checked','')}
+                                        ${causalityAssignment.causalityHitResult.causeNodeIds?seq_contains(questionNodeId+':'+cause.nodeId)?then('checked','')}
                                                name="${inputName}">
                                         ${cause.text}
                                     </label>
@@ -176,7 +187,8 @@
                 </ul>
             </div>
         </div>
-
+        </#if>
+        </#list>
     </#list>
     </form>
 </div>

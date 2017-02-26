@@ -228,8 +228,8 @@ public class CausalityPhaseManager implements PhaseManager {
             List<CausalityHitResult> causalityHitResults = hitManager.getCausalityHitForReview(uncompletedCausalityHit);
 
             for (CausalityHitResult causalityHitResult : causalityHitResults) {
-                causalityHitReviewData.setHitDone(true);
                 causalityHitReviewData.setHitId(uncompletedCausalityHit);
+                causalityHitReviewData.setAssignmentId(causalityHitResult.getAssignmentId());
 
                 // The assumption is that the node ID contains a version (i.e. 1234_0 or 1234_1 for nodeid 1234)
                 // and both appear in the cause or noncause

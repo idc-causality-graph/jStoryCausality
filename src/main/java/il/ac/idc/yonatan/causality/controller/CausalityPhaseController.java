@@ -43,18 +43,19 @@ public class CausalityPhaseController extends AbsPhaseController {
 
     @PostMapping("contextTree/reviewsCausalityPhase")
     public String commitReviewCausalityPhase(@RequestParam Map<String, String> result) throws IOException {
-        Set<Pair<String, String>> hitAssignmentIds = getHitIdsFromMap(result);
+        Set<String> hitAssignmentIds = getHitIdsFromMap(result);
 
-        for (Pair<String, String> hitAssignmentId : hitAssignmentIds) {
-            String hitId = hitAssignmentId.getLeft();
-            String assignmentId = hitAssignmentId.getRight();
-            boolean approved = StringUtils.equals(result.get(assignmentId + "_approve"), "1");
-            String reason = result.get(assignmentId + "_reason");
-            String pairString = result.get(assignmentId + "_pairs");
+        for (String hitAssignmentId : hitAssignmentIds) {
+            Pair<String, String> pair = splitToHitAssignmentId(hitAssignmentId);
+            String hitId = pair.getLeft();
+            String assignmentId = pair.getRight();
+            boolean approved = StringUtils.equals(result.get(hitAssignmentId + "_approve"), "1");
+            String reason = result.get(hitAssignmentId + "_reason");
+            String pairString = result.get(hitAssignmentId + "_pairs");
             String[] pairs = StringUtils.split(pairString, ";");
             List<CauseAndAffect> causeAndAffects = new ArrayList<>();
-            for (String pair : pairs) {
-                String[] split = StringUtils.split(pair, ":");
+            for (String aPair : pairs) {
+                String[] split = StringUtils.split(aPair, ":");
                 causeAndAffects.add(new CauseAndAffect(split[1], split[0]));
             }
             causalityPhaseManager.handleCausalityPhaseReview(hitId, assignmentId, approved, reason, causeAndAffects);

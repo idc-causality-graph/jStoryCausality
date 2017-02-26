@@ -15,16 +15,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class AbsPhaseController {
     /**
-     *
      * @param result
      * @return Pair of HitID,AssignmentId
      */
-    Set<Pair<String,String>> getHitIdsFromMap(Map<String, String> result) {
+    Set<String> getHitIdsFromMap(Map<String, String> result) {
         return result.keySet().stream()
                 .filter(x -> x.endsWith("_approve"))
                 .map(x -> StringUtils.substringBeforeLast(x, "_approve"))
-                .map(x-> Pair.of(StringUtils.substringBefore(x,":"),StringUtils.substringAfter(x,":")))
                 .collect(Collectors.toSet());
+    }
+
+    Pair<String, String> splitToHitAssignmentId(String hitAssignmentId) {
+        return Pair.of(StringUtils.substringBefore(hitAssignmentId, ":"),
+                StringUtils.substringAfter(hitAssignmentId, ":"));
     }
 
     String processHits(RedirectAttributes redir, PhaseManager phaseManager) throws IOException {

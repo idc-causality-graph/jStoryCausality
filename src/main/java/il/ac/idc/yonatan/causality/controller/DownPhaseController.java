@@ -45,15 +45,17 @@ public class DownPhaseController extends AbsPhaseController {
 
     @PostMapping("contextTree/reviewsDownPhase")
     public String commitReviewDownPhase(@RequestParam Map<String, String> result) throws IOException {
-        Set<Pair<String, String>> hitAssignmentIds = getHitIdsFromMap(result);
+        Set<String> hitAssignmentIds = getHitIdsFromMap(result);
 
-        for (Pair<String, String> hitAssignmentId : hitAssignmentIds) {
-            String hitId = hitAssignmentId.getLeft();
-            String assignmentId = hitAssignmentId.getRight();
-            boolean approved = StringUtils.equals(result.get(assignmentId + "_approve"), "1");
-            String reason = result.get(assignmentId + "_reason");
-            String nodeId = result.get(assignmentId + "_nodeid");
-            String hitEncodedData = result.get(assignmentId+"_data");
+        for (String hitAssignmentId : hitAssignmentIds) {
+            Pair<String, String> pair = splitToHitAssignmentId(hitAssignmentId);
+
+            String hitId = pair.getLeft();
+            String assignmentId = pair.getRight();
+            boolean approved = StringUtils.equals(result.get(hitAssignmentId + "_approve"), "1");
+            String reason = result.get(hitAssignmentId + "_reason");
+            String nodeId = result.get(hitAssignmentId + "_nodeid");
+            String hitEncodedData = result.get(hitAssignmentId+"_data");
             List<Triple<String, Integer, String>> idsAndScoresAndEvents = decodeDataToIdsAndScoresAndEvents(hitEncodedData);
 
             downPhaseManager.handleDownPhaseReview(nodeId, hitId, assignmentId, approved, reason, idsAndScoresAndEvents);

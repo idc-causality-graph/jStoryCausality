@@ -33,34 +33,29 @@
             </div>
         </div>
 
-    <#list hitsForReview?sort_by('hitDone')?reverse as hitForReview>
+    <#list hitsForReview as hitForReview>
+        <#assign assignmentId = hitForReview.assignmentId>
+        <#assign assignmentHitId = hitForReview.hitId + ':' + hitForReview.assignmentId>
         <div class="card mb-2">
-            <div class="card-header ${hitForReview.hitDone?then('card-primary card-inverse','')}">
-                HitId: ${hitForReview.hitId}
+            <div class="card-header card-primary card-inverse">
+                HitId: ${assignmentHitId}
             </div>
             <div class="card-block">
-                <div class="form-group row">
-                    <label class="col-sm-2 form-control-label">Is done?</label>
-                    <div class="col-sm-10">
-                        <span class="form-control-static">${hitForReview.hitDone?c}</span>
+                <#assign hiddenInput = []>
+                <#if !hitForReview.consistentAnswers>
+                    <div class="form-group row">
+                        <div class="col-sm-12 text-danger">Non consistent answer</div>
                     </div>
-                </div>
-                <#if hitForReview.hitDone>
-                    <#assign hiddenInput = []>
-                    <#if !hitForReview.consistentAnswers>
-                        <div class="form-group row">
-                            <div class="col-sm-12 text-danger">Non consistent answer</div>
+                </#if>
+                <#list hitForReview.causalityDataList as causalityData>
+                    <div class="form-group row">
+                        <label class="col-sm-2 form-control-label">Query node (${causalityData.queryNodeId})</label>
+                        <div class="col-sm-10">
+                            <span class="form-control-static">${causalityData.queryText}</span>
                         </div>
-                    </#if>
-                    <#list hitForReview.causalityDataList as causalityData>
-                        <div class="form-group row">
-                            <label class="col-sm-2 form-control-label">Query node (${causalityData.queryNodeId})</label>
-                            <div class="col-sm-10">
-                                <span class="form-control-static">${causalityData.queryText}</span>
-                            </div>
-                        </div>
-                        <label>Causes</label><br>
-                        <ul>
+                    </div>
+                    <label>Causes</label><br>
+                    <ul>
                         <#list causalityData.causeNodesTextRelations as nodeTextRel>
                             <#if nodeTextRel.right>
                                 <#assign hiddenInput = hiddenInput + [ causalityData.queryNodeId + ':' + nodeTextRel.left]>
@@ -75,35 +70,35 @@
                                 </div>
                             </div>
                         </#list>
-                        </ul>
-                    <#sep ><hr/></#sep>
-                    </#list>
+                    </ul>
+                    <#sep >
+                        <hr/></#sep>
+                </#list>
 
-                    <!-- TODO refactor that into common code -->
-                    <fieldset class="form-group row">
-                        <legend class="col-form-legend col-sm-2">Approve</legend>
-                        <div class="form-check form-check-inline">
-                            <label class="form-check-label">
-                                <input type="radio" name="${hitForReview.hitId}_approve" value="1"
-                                       data-hitid="${hitForReview.hitId}"> Yes
-                            </label>
-                            <label class="form-check-label">
-                                <input type="radio" name="${hitForReview.hitId}_approve" value="0"
-                                       data-hitid="${hitForReview.hitId}"> No
-                            </label>
-                        </div>
-                    </fieldset>
-                    <div class="form-group row" id="${hitForReview.hitId}_reason" style="display: none">
-                        <label class="col-sm-2 form-control-label">Reason</label>
-                        <div class="col-sm-10">
-                                <textarea name="${hitForReview.hitId}_reason" placeholder="Reason"
+                <!-- TODO refactor that into common code -->
+                <fieldset class="form-group row">
+                    <legend class="col-form-legend col-sm-2">Approve</legend>
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label">
+                            <input type="radio" name="${assignmentHitId}_approve" value="1"
+                                   data-hitid="${assignmentId}"> Yes
+                        </label>
+                        <label class="form-check-label">
+                            <input type="radio" name="${assignmentHitId}_approve" value="0"
+                                   data-hitid="${assignmentId}"> No
+                        </label>
+                    </div>
+                </fieldset>
+                <div class="form-group row" id="${assignmentId}_reason" style="display: none">
+                    <label class="col-sm-2 form-control-label">Reason</label>
+                    <div class="col-sm-10">
+                                <textarea name="${assignmentId}_reason" placeholder="Reason"
                                           autocomplete="off"
                                           class="form-control"></textarea>
-                        </div>
                     </div>
+                </div>
 
-                    <input type="hidden" name="${hitForReview.hitId}_pairs" value="${hiddenInput?join(';')}">
-                </#if>
+                <input type="hidden" name="${assignmentHitId}_pairs" value="${hiddenInput?join(';')}">
             </div>
         </div>
     </#list>

@@ -15,7 +15,7 @@ import java.util.List;
 public class CausalityHitReviewData {
 
     private String hitId;
-    private boolean hitDone;
+    private String assignmentId;
     // Is the answers the worker replayed are consistent with each other
     private boolean consistentAnswers;
 

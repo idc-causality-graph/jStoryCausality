@@ -95,7 +95,7 @@ public class ContextTreeManager {
 
     public void save() throws IOException {
         File contextTreeFile = appConfig.getContextFile();
-        log.debug("Saving context file to {}",contextTreeFile);
+        log.debug("Saving context file to {}", contextTreeFile);
         try (OutputStream os = new FileOutputStream(contextTreeFile)) {
             String json = objectMapper.writeValueAsString(contextTree);
             IOUtils.write(json, os, Charset.defaultCharset());
@@ -103,7 +103,8 @@ public class ContextTreeManager {
     }
 
     public String dumpHtml() {
-        return new ContextTreeHtml(contextTree, fmConfig).create();
+        return new ContextTreeHtml(contextTree, fmConfig,
+                appConfig.getReplicationFactor(), appConfig.getCausalityReplicaFactor()).create();
     }
 
     private void addUpperLevel(boolean leafLevel) {

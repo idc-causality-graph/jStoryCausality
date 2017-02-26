@@ -170,6 +170,9 @@ public class DownPhaseManager implements PhaseManager {
                 continue;
             }
             String downHitId = node.getDownHitId();
+            if (downHitId == null) {
+                continue;
+            }
             List<String> parentsSummaries = getParentsSummaries(node);
             Map<String, String> childIdToSummary =
                     node.getChildren().stream()
@@ -180,10 +183,10 @@ public class DownPhaseManager implements PhaseManager {
                 DownHitReviewData downHitReviewData = new DownHitReviewData();
                 result.add(downHitReviewData);
                 downHitReviewData.setHitId(downHitId);
+                downHitReviewData.setAssignmentId(downHitResult.getAssignmentId());
                 downHitReviewData.setNodeId(node.getId());
                 downHitReviewData.setParentsSummaries(parentsSummaries);
                 downHitReviewData.setChildIdToSummary(childIdToSummary);
-                downHitReviewData.setHitDone(true);
                 List<Triple<String, Integer, String>> idsAndScoresAndEvents = downHitResult.getIdsAndScoresAndEvents()
                         .stream()
                         .map(ise -> Triple.of(ise.getNodeId(), ise.getScore(), ise.getMostImportantEvent()))

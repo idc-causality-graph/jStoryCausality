@@ -38,16 +38,17 @@ public class UpPhaseController extends AbsPhaseController {
 
     @PostMapping(value = "contextTree/reviewsUpPhase")
     public String commitReviewUpPhase(@RequestParam Map<String, String> result) throws IOException {
-        Set<Pair<String, String>> hitAssignmentIds = getHitIdsFromMap(result);
-        for (Pair<String, String> hitAssignmentId : hitAssignmentIds) {
-            String hitId = hitAssignmentId.getLeft();
-            String assignmentId = hitAssignmentId.getRight();
-            boolean approved = StringUtils.equals(result.get(assignmentId + "_approve"), "1");
-            String reason = result.get(assignmentId + "_reason");
-            String nodeId = result.get(assignmentId + "_nodeid");
-            String summaryBase64 = result.get(assignmentId + "_summary");
+        Set<String> hitAssignmentIds = getHitIdsFromMap(result);
+        for (String hitAssignmentId : hitAssignmentIds) {
+            Pair<String, String> pair = splitToHitAssignmentId(hitAssignmentId);
+            String hitId = pair.getLeft();
+            String assignmentId = pair.getRight();
+            boolean approved = StringUtils.equals(result.get(hitAssignmentId + "_approve"), "1");
+            String reason = result.get(hitAssignmentId + "_reason");
+            String nodeId = result.get(hitAssignmentId + "_nodeid");
+            String summaryBase64 = result.get(hitAssignmentId + "_summary");
             Map<String, Integer> chosenChildrenSummaries =
-                    getChosenChildrenSummariesFromParam(result.get(assignmentId + "_chosenChildrenSummaries"));
+                    getChosenChildrenSummariesFromParam(result.get(hitAssignmentId + "_chosenChildrenSummaries"));
             String summary;
             if (StringUtils.isNotEmpty(summaryBase64)) {
                 summary = new String(Base64.getDecoder().decode(summaryBase64));

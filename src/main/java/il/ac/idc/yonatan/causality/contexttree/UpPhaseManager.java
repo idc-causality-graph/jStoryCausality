@@ -55,12 +55,13 @@ public class UpPhaseManager implements PhaseManager {
         }
 
         List<Node> nodes = nodeLevel.getNodes();
-        for (Node node : nodes) {
-            if (!node.isUpPhaseDone(appConfig.getReplicationFactor())) {
-//            if (node.getUpHitIds().size() != node.getCompletedUpHitIds().size()) {
-                errors.add("Node " + node.getId() + " still need review");
-            }
-        }
+        System.out.println("\n\n\n\nTODOD!\n\n\n");
+//        for (Node node : nodes) {
+//            if (!node.isUpPhaseDone(appConfig.getReplicationFactor())) {
+////            if (node.getUpHitIds().size() != node.getCompletedUpHitIds().size()) {
+//                errors.add("Node " + node.getId() + " still need review");
+//            }
+//        }
         return errors;
     }
 
@@ -72,7 +73,6 @@ public class UpPhaseManager implements PhaseManager {
             return;
         }
         List<Node> nodes = nodeLevel.getNodes();
-        boolean saveNeeded = false;
         for (Node node : nodes) {
             List<Node> children = node.getChildren();
             LinkedHashMap<String, List<String>> childIdToSummaries = new LinkedHashMap<>();
@@ -84,18 +84,11 @@ public class UpPhaseManager implements PhaseManager {
                     childIdToSummaries.put(child.getId(), summaries);
                 }
             }
-            //TODO assert that all children have the same number of summaries
-//            for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
-                node.setUpHitTaskData(childIdToSummaries);
-                String hitId = hitManager.createUpHit(childIdToSummaries);
-                node.setUpHitID(hitId);
-//                node.getUpHitIds().add(hitId);
-                saveNeeded = true;
-//            }
+            node.setUpHitTaskData(childIdToSummaries);
+            String hitId = hitManager.createUpHit(childIdToSummaries);
+            node.setUpHitId(hitId);
         }
-        if (saveNeeded) {
-            contextTreeManager.save();
-        }
+        contextTreeManager.save();
     }
 
     public void handleUpPhaseReview(String nodeId, String hitId, String assignmentId, String summary, boolean hitApproved,
@@ -122,7 +115,7 @@ public class UpPhaseManager implements PhaseManager {
             //Check if all nodes are done in level. If so, perform the next step
             NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
             boolean isAllNodesDone = nodeLevel.getNodes().stream()
-                    .allMatch(n->n.isUpPhaseDone(appConfig.getReplicationFactor()));
+                    .allMatch(n -> n.isUpPhaseDone(appConfig.getReplicationFactor()));
             if (isAllNodesDone) {
                 contextTree.setUpLevelStep(contextTree.getUpLevelStep() + 1);
                 if (getCurrentUpPhaseNodeLevel(contextTree) == null) {
@@ -165,17 +158,20 @@ public class UpPhaseManager implements PhaseManager {
         }
         List<Node> nodes = nodeLevel.getNodes(); //getNodes(nodeLevel);
         for (Node node : nodes) {
-            if (node.isUpPhaseDone(appConfig.getReplicationFactor())){
+            if (node.isUpPhaseDone(appConfig.getReplicationFactor())) {
                 continue;
             }
-            String upHitId=node.getUpHitID();
+            String upHitId = node.getUpHitId();
+            if (upHitId == null) {
+                continue;
+            }
             List<UpHitResult> upHitsForReview = hitManager.getUpHitForReview(upHitId);
             for (UpHitResult upHitForReview : upHitsForReview) {
                 UpHitReviewData upHitReviewData = new UpHitReviewData();
                 result.add(upHitReviewData);
                 upHitReviewData.setNodeId(node.getId());
                 upHitReviewData.setHitId(upHitId);
-                upHitReviewData.setHitDone(true);
+                upHitReviewData.setAssignmentId(upHitForReview.getAssignmentId());
                 upHitReviewData.setChosenChildrenSummariesJsonBase64(
                         getObjectInJsonBase64(upHitForReview.getChosenChildrenSummaries()));
 

@@ -19,7 +19,7 @@
             <div class="form-group row mb-0">
                 <label class="col-sm-2 col-form-label">Up phase done?</label>
                 <div class="col-sm-10">
-                    <p class="form-control-static">${node.upPhaseDone?c}</p>
+                    <p class="form-control-static">${node.isUpPhaseDone(repFactor)?c}</p>
                 </div>
             </div>
         </#if>
@@ -27,20 +27,15 @@
         <div class="form-group row mb-0">
             <label class="col-sm-2 col-form-label">Down phase done?</label>
             <div class="col-sm-10">
-                <p class="form-control-static">${node.downPhaseDone?c}</p>
+                <p class="form-control-static">${node.isDownPhaseDone(repFactor)?c}</p>
             </div>
         </div>
-    <#if (node.upHitIds?size>0)>
+    <#if node.upHitId??>
         <div class="form-group row mb-0">
-            <label class="col-sm-2 col-form-label">Up HITs</label>
+            <label class="col-sm-2 col-form-label">Up HIT</label>
             <div class="col-sm-10">
-                <p class="form-control-static">
-                    <#list node.upHitIds as upHitId>
-                        <span class="<#if node.completedUpHitIds?seq_contains(upHitId)>hit_id_done</#if>">
-                        ${upHitId}
-                        </span>
-                        <#sep><span>,  </span></#sep>
-                    </#list>
+                <p class="form-control-static">${node.upHitId}: (${node.completedUpAssignmentsIds?size}/${repFactor})
+                ${node.completedUpAssignmentsIds?join(', ')}
                 </p>
             </div>
         </div>
@@ -82,15 +77,16 @@
         </#if>
         </div>
     <#if isRoot></form></#if>
-    <#if (node.downHitIds?size>0)>
+    <#if (node.downHitId??)>
         <div class="form-group row">
             <label class="col-sm-2 col-form-label">Down HITs</label>
             <div class="col-sm-10">
                 <p class="form-control-static">
-                    <#list node.downHitIds as downHitId>
-                        <span class="<#if node.completedDownHitIds?seq_contains(downHitId)>hit_id_done</#if>">${downHitId}</span>
-                        <#sep><span>,  </span></#sep>
-                    </#list>
+                ${node.downHitId}
+                    <#--<#list node.downHitIds as downHitId>-->
+                        <#--<span class="<#if node.completedDownHitIds?seq_contains(downHitId)>hit_id_done</#if>">${downHitId}</span>-->
+                        <#--<#sep><span>,  </span></#sep>-->
+                    <#--</#list>-->
                 </p>
             </div>
         </div>

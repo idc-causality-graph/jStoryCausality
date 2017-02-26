@@ -36,7 +36,7 @@ public class Node {
     @Setter(AccessLevel.NONE)
     private List<String> summaries = new ArrayList<>();
 
-    private String upHitID;
+    private String upHitId;
 //    @Setter(AccessLevel.NONE)
 //    private List<String> upHitIds = new ArrayList<>();
 

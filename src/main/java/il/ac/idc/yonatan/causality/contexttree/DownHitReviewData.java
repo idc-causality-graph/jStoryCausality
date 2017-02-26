@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
  */
 @Data
 public class DownHitReviewData {
-    private boolean hitDone;
     private String hitId;
+    private String assignmentId;
     private String nodeId;
     private List<String> parentsSummaries;
     private Map<String, String> childIdToSummary;

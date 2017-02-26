@@ -27,50 +27,45 @@
                 <a class="p-2 btn btn-info" href="">Reload</a>
             </div>
         </div>
-    <#list hitsForReview?sort_by('hitDone')?reverse as hitForReview>
-
+    <#list hitsForReview as hitForReview>
+        <#assign assignmentId = hitForReview.assignmentId>
+        <#assign assignmentHitId = hitForReview.hitId + ':' + hitForReview.assignmentId>
         <div class="card mb-2">
-            <div class="card-header ${hitForReview.hitDone?then('card-primary card-inverse','')}">
-                HitId: ${hitForReview.hitId}
+            <div class="card-header card-primary card-inverse">
+                HitId: ${assignmentHitId}
             </div>
             <div class="card-block">
                 <div class="form-group row">
-                    <label class="col-sm-1 form-control-label">Is done?</label>
-                    <div class="col-sm-11 form-control-static">${hitForReview.hitDone?c}</div>
+                    <label class="col-sm-1 form-control-label">Task text</label>
+                    <div class="col-sm-11">
+                        <span class="form-control-static">${hitForReview.taskText}</span>
+                    </div>
                 </div>
-
-                <#if hitForReview.hitDone>
-                    <div class="form-group row">
-                        <label class="col-sm-1 form-control-label">Task text</label>
-                        <div class="col-sm-11">
-                            <span class="form-control-static">${hitForReview.taskText}</span>
+                <hr/>
+                <div class="form-group row">
+                    <label class="col-sm-1 form-control-label">Summary</label>
+                    <div class="col-sm-11">
+                        <span class="form-control-static">${hitForReview.summary}</span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-1 form-control-label">Approve:</label>
+                    <div class="col-sm-11 form-control">
+                        <label><input type="radio" name="${assignmentHitId}_approve" value="1"
+                                      data-hitid="${assignmentId}"> Yes</label>
+                        <label><input type="radio" name="${assignmentHitId}_approve" value="0"
+                                      data-hitid="${assignmentId}"> No</label>
+                        <div id="${assignmentId}_reason" style="display: none">
+                            <textarea class="form-control"
+                                      autocomplete="off" name="${assignmentHitId}_reason"
+                                      placeholder="Reason"></textarea>
                         </div>
                     </div>
-                    <hr/>
-                    <div class="form-group row">
-                        <label class="col-sm-1 form-control-label">Summary</label>
-                        <div class="col-sm-11">
-                            <span class="form-control-static">${hitForReview.summary}</span>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label class="col-sm-1 form-control-label">Approve:</label>
-                        <div class="col-sm-11 form-control">
-                            <label><input type="radio" name="${hitForReview.hitId}_approve" value="1"
-                                          data-hitid="${hitForReview.hitId}"> Yes</label>
-                            <label><input type="radio" name="${hitForReview.hitId}_approve" value="0"
-                                          data-hitid="${hitForReview.hitId}"> No</label>
-                            <div id="${hitForReview.hitId}_reason" style="display: none">
-                                <textarea autocomplete="off" name="${hitForReview.hitId}_reason"
-                                          placeholder="Reason"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </#if>
-                <input type="hidden" name="${hitForReview.hitId}_chosenChildrenSummaries"
+                </div>
+                <input type="hidden" name="${assignmentHitId}_chosenChildrenSummaries"
                        value="${hitForReview.chosenChildrenSummariesJsonBase64}">
-                <input type="hidden" name="${hitForReview.hitId}_nodeid" value="${hitForReview.nodeId}">
-                <input type="hidden" name="${hitForReview.hitId}_summary" value="${hitForReview.summaryBase64}">
+                <input type="hidden" name="${assignmentHitId}_nodeid" value="${hitForReview.nodeId}">
+                <input type="hidden" name="${assignmentHitId}_summary" value="${hitForReview.summaryBase64}">
             </div>
         </div>
         <#sep><br></#sep>

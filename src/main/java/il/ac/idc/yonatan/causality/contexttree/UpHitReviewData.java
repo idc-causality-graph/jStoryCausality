@@ -12,6 +12,7 @@ import java.util.Map;
 @Data
 public class UpHitReviewData {
     private String hitId;
+    private String assignmentId;
     private String summary;
     private String taskText;
     private String nodeId;
@@ -23,8 +24,4 @@ public class UpHitReviewData {
         return Base64.getEncoder().encodeToString(summary.getBytes());
     }
 
-    /**
-     * Is hit done, or still needed to be completed?
-     */
-    private boolean hitDone;
 }
