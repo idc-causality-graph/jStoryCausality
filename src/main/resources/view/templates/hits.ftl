@@ -92,7 +92,7 @@
                 <label>Events and scores</label>
                 <ul>
                     <#list downHit.childrenIdsAndSummaries as childIdAndSummary>
-                        <#if downAssignment.downHitResult.idsAndScoresAndEvents??>
+                        <#if (downAssignment.downHitResult.idsAndScoresAndEvents?size>0)>
                             <#assign given_score = downAssignment.downHitResult.idsAndScoresAndEvents[childIdAndSummary?index].score>
                             <#assign event = downAssignment.downHitResult.idsAndScoresAndEvents[childIdAndSummary?index].mostImportantEvent>
                         <#else>
@@ -157,7 +157,7 @@
                     </div>
                 </div>
                 <ul>
-                    <#list causalityHit.causalityQuestions as causalityQuestion>
+                    <#list causalityHit.causalityHitQuestions as causalityQuestion>
                         <#assign questionNodeId=causalityQuestion.questionNodeId>
                         <div class="form-group row">
                             <label class="form-control-label col-sm-1">Event</label>

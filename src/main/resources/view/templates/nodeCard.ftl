@@ -79,14 +79,10 @@
     <#if isRoot></form></#if>
     <#if (node.downHitId??)>
         <div class="form-group row">
-            <label class="col-sm-2 col-form-label">Down HITs</label>
+            <label class="col-sm-2 col-form-label">Down HIT</label>
             <div class="col-sm-10">
-                <p class="form-control-static">
-                ${node.downHitId}
-                    <#--<#list node.downHitIds as downHitId>-->
-                        <#--<span class="<#if node.completedDownHitIds?seq_contains(downHitId)>hit_id_done</#if>">${downHitId}</span>-->
-                        <#--<#sep><span>,  </span></#sep>-->
-                    <#--</#list>-->
+                <p class="form-control-static">${node.downHitId}: (${node.completedDownAssignmentsIds?size}/${repFactor})
+                ${node.completedDownAssignmentsIds?join(', ')}
                 </p>
             </div>
         </div>

@@ -387,7 +387,6 @@ public class HitManagerMockImpl implements HitManager {
 
 
     private static String findHitIdForHitDownFieldKey(String key) {
-        key = StringUtils.substringAfter(key, DOWN_HIT_PREFIX);
         key = StringUtils.substringBeforeLast(key, "_");
         key = StringUtils.substringBeforeLast(key, "_");
         return key;
@@ -402,13 +401,14 @@ public class HitManagerMockImpl implements HitManager {
                 .collect(toSet());
 
         for (String hitAssignmentId : hitAssignmentIds) {
+            System.out.println("HAID " + hitAssignmentId);
             String hitId = StringUtils.substringBefore(hitAssignmentId, ":");
             String assignmentId = StringUtils.substringAfter(hitAssignmentId, ":");
 
             DownHitStorage downHitStorage = hitStorage.getDownHitStorage().get(hitId);
 
             List<String> scoreFields = result.keySet().stream()
-                    .filter(name -> name.startsWith(DOWN_HIT_PREFIX + hitAssignmentId + "_score_"))
+                    .filter(name -> name.startsWith(hitAssignmentId + "_score_"))
                     .collect(toList());
 
             List<IdScoreAndEvent> idScoreAndEvents = new ArrayList<>();
@@ -416,8 +416,8 @@ public class HitManagerMockImpl implements HitManager {
             for (String scoreField : scoreFields) {
                 String idx = StringUtils.substringAfterLast(scoreField, "_");
                 Integer score = NumberUtils.createInteger(result.get(scoreField));
-                String nodeId = result.get(DOWN_HIT_PREFIX + hitId + "_nodeid_" + idx);
-                String event = result.get(DOWN_HIT_PREFIX + hitId + "_event_" + idx);
+                String nodeId = result.get(hitAssignmentId + "_nodeid_" + idx);
+                String event = result.get(hitAssignmentId + "_event_" + idx);
                 if (score != null && nodeId != null && StringUtils.isNotEmpty(event)) {
                     idScoreAndEvents.add(new IdScoreAndEvent(nodeId, score, event));
                 } else {
@@ -442,14 +442,13 @@ public class HitManagerMockImpl implements HitManager {
 
         Set<String> seenQueryNodeIds = new HashSet<>();
         for (String causalityInputId : causalityInputs) {
-            String hitAssignmentId = StringUtils.substringBefore(
-                    StringUtils.substringAfter(causalityInputId, CAUS_HIT_PREFIX),
-                    ";");
+            System.out.println("CID " + causalityInputId);
+            String hitAssignmentId = StringUtils.substringBefore(causalityInputId, ";");
+            System.out.println("HAI " + hitAssignmentId);
             String hitId = StringUtils.substringBefore(hitAssignmentId, ":");
             String assignmentId = StringUtils.substringAfter(hitAssignmentId, ":");
 //            log.debug("Processing causality hit {}", hitId);
             CausalityHitStorage causalityHitStorage = hitStorage.getCausalityHitStorage().get(hitId);
-
 
             String response = result.get(causalityInputId);
             boolean causality = BooleanUtils.toBoolean(response);
