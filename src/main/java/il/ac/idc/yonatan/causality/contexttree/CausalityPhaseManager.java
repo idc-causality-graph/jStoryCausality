@@ -224,10 +224,12 @@ public class CausalityPhaseManager implements PhaseManager {
         for (String uncompletedCausalityHit : uncompletedCausalityHits) {
             // this hit contains more than one query node, and of each query node more than one cause.
             // this code turn in into map from query node to list of causes and non causes.
-            CausalityHitReviewData causalityHitReviewData = new CausalityHitReviewData();
-            List<CausalityHitResult> causalityHitResults = hitManager.getCausalityHitForReview(uncompletedCausalityHit);
 
+            List<CausalityHitResult> causalityHitResults = hitManager.getCausalityHitForReview(uncompletedCausalityHit);
             for (CausalityHitResult causalityHitResult : causalityHitResults) {
+                CausalityHitReviewData causalityHitReviewData = new CausalityHitReviewData();
+                causalityHitReviewDataList.add(causalityHitReviewData);
+
                 causalityHitReviewData.setHitId(uncompletedCausalityHit);
                 causalityHitReviewData.setAssignmentId(causalityHitResult.getAssignmentId());
 
@@ -250,7 +252,6 @@ public class CausalityPhaseManager implements PhaseManager {
                     causalityHitReviewData.getCausalityDataList().addAll(resultCauses);
                     causalityHitReviewData.getCausalityDataList().addAll(resultNonCauses);
                 }
-                causalityHitReviewDataList.add(causalityHitReviewData);
             }
 
         }

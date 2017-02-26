@@ -442,21 +442,26 @@ public class HitManagerMockImpl implements HitManager {
 
         Set<String> seenQueryNodeIds = new HashSet<>();
         for (String causalityInputId : causalityInputs) {
-            System.out.println("CID " + causalityInputId);
             String hitAssignmentId = StringUtils.substringBefore(causalityInputId, ";");
-            System.out.println("HAI " + hitAssignmentId);
             String hitId = StringUtils.substringBefore(hitAssignmentId, ":");
             String assignmentId = StringUtils.substringAfter(hitAssignmentId, ":");
-//            log.debug("Processing causality hit {}", hitId);
-            CausalityHitStorage causalityHitStorage = hitStorage.getCausalityHitStorage().get(hitId);
+            String causeAndAffectIds = StringUtils.substringAfter(causalityInputId, ";");
+            String queryNodeId = StringUtils.substringBefore(causeAndAffectIds, ";");
+            String causeId = StringUtils.substringAfter(causeAndAffectIds, ";");
+
+            System.out.println("causalityInputId: " + causalityInputId);
+            System.out.println("hitAssignmentId: " + hitAssignmentId);
+            System.out.println("hitId: " + hitId);
+            System.out.println("assignmentId: " + assignmentId);
+            System.out.println("causeId: " + causeId);
+            System.out.println("queryNodeId: " + queryNodeId);
 
             String response = result.get(causalityInputId);
             boolean causality = BooleanUtils.toBoolean(response);
+            System.out.println("Response " + response + " - " + causality);
 
-            String causeAndAffectIds = StringUtils.substringAfter(causalityInputId, ":");
-            String queryNodeId = StringUtils.substringBefore(causeAndAffectIds, ":");
+            CausalityHitStorage causalityHitStorage = hitStorage.getCausalityHitStorage().get(hitId);
 
-            String causeId = StringUtils.substringAfter(causeAndAffectIds, ":");
             CauseAndAffect causeAndAffect = new CauseAndAffect(causeId, queryNodeId);
             CausalityAssignment causalityAssignment = causalityHitStorage.getCausalityAssignments().stream()
                     .filter(x -> x.getCausalityHitResult().getAssignmentId().endsWith(assignmentId))

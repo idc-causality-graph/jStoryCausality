@@ -9,7 +9,7 @@
     <script type="application/javascript">
         $(function () {
             $("#theform").submit(function () {
-                $("input[name*='CAUS_'][type='checkbox']:checked").prev().attr('disabled', true);
+                $("input[name*='CAUSHIT-'][type='checkbox']:checked").prev().attr('disabled', true);
             });
         });
     </script>
