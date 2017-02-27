@@ -268,7 +268,7 @@ public class CausalityPhaseManager implements PhaseManager {
                 Node causeNode = contextTree.getNode(causeNodeId);
                 causeNode.getCausalityData().getTargetNodeIds().add(queryNodeId);
             }
-            Set<String> completedAssignments = contextTree.getCompletedCausalityAssignmentsByHit().getOrDefault(hitId, new HashSet<>());
+            Set<String> completedAssignments = contextTree.getCompletedCausalityAssignmentsByHit().computeIfAbsent(hitId,x->new HashSet<>());
             completedAssignments.add(assignmentId);
             if (completedAssignments.size() == appConfig.getCausalityReplicaFactor()) {
                 contextTree.getCompletedCausalityHits().add(hitId);
