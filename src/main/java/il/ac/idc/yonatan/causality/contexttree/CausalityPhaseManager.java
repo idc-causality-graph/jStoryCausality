@@ -114,7 +114,6 @@ public class CausalityPhaseManager implements PhaseManager {
      * Out of every B query nodes, create a single HIT - which asks for to check all actual causes out of the cause nodes.
      */
     public void createHits() throws IOException {
-//        int r = appConfig.getCausalityReplicaFactor();
         int b = appConfig.getBranchFactor();
 
         ContextTree contextTree = contextTreeManager.getContextTree();
@@ -138,7 +137,7 @@ public class CausalityPhaseManager implements PhaseManager {
                 }
                 if (potCausalityNode.getLeftmostLeafIndex() > queryNodeIdx) {
                     // The earliest child happens after the query node happens.
-                    // So None of my children can affectively be the cause for the
+                    // So None of my children can effectively be the cause for the
                     // query node. Skip it.
                     continue;
                 }
@@ -165,10 +164,8 @@ public class CausalityPhaseManager implements PhaseManager {
             // partitionedQueryToPotCause contains no more than b pairs!
             List<CausalityQuestion> causalityHitQuestions = createCausalityHitQuestions(questionsData);
             String globalSummary = rootNode.getBestSummary();
-//            for (int i = 0; i < r; i++) {
             String hitId = hitManager.createCausalityHit(globalSummary, causalityHitQuestions);
             contextTree.getCausalityHits().add(hitId);
-//            }
         }
         contextTreeManager.save();
     }

@@ -105,7 +105,6 @@ public class UpPhaseManager implements PhaseManager {
         if (hitApproved) {
             node.getSummaries().add(summary);
             node.getCompletedUpAssignmentsIds().add(assignmentId);
-//            node.getCompletedUpHitIds().add(hitId);
             for (Node childNode : node.getChildren()) {
                 // this is why children get so many votes.
                 String childId = childNode.getId();
@@ -189,37 +188,6 @@ public class UpPhaseManager implements PhaseManager {
                 upHitReviewData.setTaskText(taskText.toString());
 
             }
-//            String upHitId = node.getUpHitID();
-//
-//            List<String> upHitIds = node.getUpHitIds();
-//            Set<String> completedUpHitIds = node.getCompletedUpHitIds();
-//            for (String upHitId : upHitIds) {
-//                if (!completedUpHitIds.contains(upHitId)) {
-//                    UpHitReviewData upHitReviewData = new UpHitReviewData();
-//                    upHitReviewData.setNodeId(node.getId());
-//                    result.add(upHitReviewData);
-//                    UpHitResult upHitResult = hitManager.getUpHitForReview(upHitId);
-//                    upHitReviewData.setHitDone(upHitResult.isHitDone());
-//                    upHitReviewData.setHitId(upHitId);
-//                    upHitReviewData.setChosenChildrenSummariesJsonBase64(
-//                            getObjectInJsonBase64(upHitResult.getChosenChildrenSummaries()));
-//
-//                    if (upHitResult.isHitDone()) {
-//                        upHitReviewData.setSummary(upHitResult.getHitSummary());
-//
-//                        LinkedHashMap<String, List<String>> upHitTaskData = node.getUpHitTaskData();
-//                        Set<String> childIds = upHitTaskData.keySet();
-//                        StringBuilder taskText = new StringBuilder();
-//                        for (String childId : childIds) {
-//                            Integer chosenSummaryNumber = upHitResult.getChosenChildrenSummaries().get(childId);
-//                            String chosenSummary = upHitTaskData.get(childId).get(chosenSummaryNumber);
-//                            taskText.append(chosenSummary);
-//                            taskText.append("<br>");
-//                        }
-//                        upHitReviewData.setTaskText(taskText.toString());
-//                    }
-//                }
-//            }
         }
         return result;
     }

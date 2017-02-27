@@ -72,7 +72,6 @@ public class HitManagerMockImpl implements HitManager {
 
     @Data
     public static class UpHitStorage {
-        // assignments
         private List<UpAssignment> upAssignments = new ArrayList<>();
         private LinkedHashMap<String, List<String>> childIdToSummaries;
     }
@@ -396,12 +395,9 @@ public class HitManagerMockImpl implements HitManager {
         Set<String> hitAssignmentIds = result.keySet().stream()
                 .filter(x -> x.startsWith(DOWN_HIT_PREFIX))
                 .map(HitManagerMockImpl::findHitIdForHitDownFieldKey)
-//                .map(s -> StringUtils.substringAfter(s, "DOWN_"))
-//                .map(s -> StringUtils.substringBeforeLast(s, "_"))
                 .collect(toSet());
 
         for (String hitAssignmentId : hitAssignmentIds) {
-            System.out.println("HAID " + hitAssignmentId);
             String hitId = StringUtils.substringBefore(hitAssignmentId, ":");
             String assignmentId = StringUtils.substringAfter(hitAssignmentId, ":");
 
@@ -449,16 +445,8 @@ public class HitManagerMockImpl implements HitManager {
             String queryNodeId = StringUtils.substringBefore(causeAndAffectIds, ";");
             String causeId = StringUtils.substringAfter(causeAndAffectIds, ";");
 
-            System.out.println("causalityInputId: " + causalityInputId);
-            System.out.println("hitAssignmentId: " + hitAssignmentId);
-            System.out.println("hitId: " + hitId);
-            System.out.println("assignmentId: " + assignmentId);
-            System.out.println("causeId: " + causeId);
-            System.out.println("queryNodeId: " + queryNodeId);
-
             String response = result.get(causalityInputId);
             boolean causality = BooleanUtils.toBoolean(response);
-            System.out.println("Response " + response + " - " + causality);
 
             CausalityHitStorage causalityHitStorage = hitStorage.getCausalityHitStorage().get(hitId);
 
@@ -467,7 +455,6 @@ public class HitManagerMockImpl implements HitManager {
                     .filter(x -> x.getCausalityHitResult().getAssignmentId().endsWith(assignmentId))
                     .findFirst().get();
             CausalityHitResult causalityHitResult = causalityAssignment.getCausalityHitResult();
-//            CausalityHitResult causalityHitResult = causalityResultStorage.getCausalityHitResult();
             if (!resetHits.contains(hitAssignmentId)) {
                 // Clear the hit result before re-save it
                 causalityHitResult.getCauseAndAffects().clear();
@@ -475,15 +462,12 @@ public class HitManagerMockImpl implements HitManager {
                 resetHits.add(hitAssignmentId);
             }
             if (causality) {
-//                log.debug("Adding cause {}", causeAndAffect);
                 causalityHitResult.getCauseAndAffects().add(causeAndAffect);
             } else {
-//                log.debug("Adding noncause {}", causeAndAffect);
                 causalityHitResult.getNonCauseAndAffects().add(causeAndAffect);
             }
             causalityAssignment.setAssignmentStatus(AssignmentStatus.SUBMITTED);
         }
-//        saveDb(hitStorage);
     }
 
 }

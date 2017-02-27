@@ -291,6 +291,11 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         return getAssignmentsForHITResult.getAssignment();
     }
 
+    /**
+     *
+     * @param hitId
+     * @return map from assignmentId -> (question -> answer)
+     */
     private Map<String, Map<String, String>> getHitAnswers(String hitId) {
         List<Assignment> assignments = getSubmittedAssignments(hitId);
         Map<String, Map<String, String>> results = new HashMap<>();
@@ -323,10 +328,9 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
             UpHitResult upHitResult = new UpHitResult();
             results.add(upHitResult);
             String assignmentId = entry.getKey();
-            upHitResult.setAssignmentId(assignmentId);
-
             Map<String, String> assignmentAnswers = entry.getValue();
 
+            upHitResult.setAssignmentId(assignmentId);
             String hitSummary = assignmentAnswers.get("hitsummary");
             upHitResult.setHitSummary(hitSummary);
             assignmentAnswers.keySet().stream()
@@ -336,22 +340,6 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
                                     Integer.parseInt(assignmentAnswers.get(key))));
         }
         return results;
-//        UpHitResult upHitResult = new UpHitResult();
-//        if (hitAnswers == null) {
-//            upHitResult.setHitDone(false);
-//        } else {
-//            upHitResult.setHitDone(true);
-//
-//            String hitSummary = hitAnswers.get("hitsummary");
-//            upHitResult.setHitSummary(hitSummary);
-//
-//            hitAnswers.keySet().stream()
-//                    .filter(key -> !key.equalsIgnoreCase("hitsummary"))
-//                    .forEach(key ->
-//                            upHitResult.getChosenChildrenSummaries().put(key,
-//                                    Integer.parseInt(hitAnswers.get(key))));
-//        }
-//        return upHitResult;
     }
 
 
@@ -440,11 +428,6 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     private void submitHitReview(String hitId, String assignmentId, boolean hitApproved, String reason) {
-//        Assignment assignment = getSubmittedAssignment(hitId);
-//        if (assignment == null) {
-//            throw new RuntimeException("Missing submitted assignment for hit " + hitId);
-//        }
-//        String assignmentId = assignment.getAssignmentId();
         if (hitApproved) {
             ApproveAssignment approveAssignment = new ApproveAssignment();
             setAwsRequestHeaders(approveAssignment);
@@ -503,6 +486,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         throw new UnsupportedOperationException("reset is not supported");
 
     }
+    //Some code to experiment with the API. Use -Dcausality.awsKey=... -Dcausality.awsSecretKey=... to pass the credentials
 //
 //    public static void main(String... args) throws Exception {
 //        String key = System.getProperty("causality.awsKey");

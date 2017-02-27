@@ -37,8 +37,6 @@ public class Node {
     private List<String> summaries = new ArrayList<>();
 
     private String upHitId;
-//    @Setter(AccessLevel.NONE)
-//    private List<String> upHitIds = new ArrayList<>();
 
     private String downHitId;
 
@@ -47,15 +45,6 @@ public class Node {
 
     @Setter(AccessLevel.NONE)
     private Set<String> completedUpAssignmentsIds = new HashSet<>();
-
-//    @Setter(AccessLevel.NONE)
-//    private List<String> downHitIds = new ArrayList<>();
-//
-//    @Setter(AccessLevel.NONE)
-//    private Set<String> completedUpHitIds = new HashSet<>();
-//
-//    @Setter(AccessLevel.NONE)
-//    private Set<String> completedDownHitIds = new HashSet<>();
 
     /**
      * Data related to constructing causalityGraph
@@ -99,14 +88,13 @@ public class Node {
 
     public boolean isDownPhaseDone(int repFactor) {
         //No down phase for leafs.
-        return isLeaf()|| (completedDownAssignmentsIds.size()==repFactor);
+        return isLeaf() || (completedDownAssignmentsIds.size() == repFactor);
 //                downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
     }
 
     public boolean isUpPhaseDone(int repFactor) {
         //No down phase for leafs.
-        return isLeaf()|| (completedUpAssignmentsIds.size()==repFactor);
-//                downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
+        return isLeaf() || (completedUpAssignmentsIds.size() == repFactor);
     }
 
     private List<String> childIds = new ArrayList<>();

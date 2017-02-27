@@ -194,41 +194,7 @@ public class DownPhaseManager implements PhaseManager {
 
                 downHitReviewData.setIdsAndScoresAndEvents(idsAndScoresAndEvents);
             }
-
-//
-//            List<String> downHitIds = node.getDownHitIds();
-//            Set<String> completedDownHitIds = node.getCompletedDownHitIds();
-//            List<String> parentsSummaries = getParentsSummaries(node);
-//            Map<String, String> childIdToSummary =
-//                    node.getChildren().stream()
-//                            .collect(toMap(Node::getId, Node::getBestSummary));
-//            for (String hitId : downHitIds) {
-//                if (completedDownHitIds.contains(hitId)) {
-//                    continue;
-//                }
-//                DownHitReviewData downHitReviewData = new DownHitReviewData();
-//                downHitReviewData.setHitId(hitId);
-//                downHitReviewData.setNodeId(node.getId());
-//                downHitReviewData.setParentsSummaries(parentsSummaries);
-//                downHitReviewData.setChildIdToSummary(childIdToSummary);
-//
-//
-//                DownHitResult downHitResult = hitManager.getDownHitForReview(hitId);
-//
-//                downHitReviewData.setHitDone(downHitResult.isHitDone());
-//                if (downHitResult.isHitDone()) {
-//                    List<Triple<String, Integer, String>> idsAndScoresAndEvents = downHitResult.getIdsAndScoresAndEvents()
-//                            .stream()
-//                            .map(ise -> Triple.of(ise.getNodeId(), ise.getScore(), ise.getMostImportantEvent()))
-//                            .collect(toList());
-//
-//                    downHitReviewData.setIdsAndScoresAndEvents(idsAndScoresAndEvents);
-//                }
-//
-//                result.add(downHitReviewData);
-//            }
         }
-//        Collections.sort(result, (o1, o2) -> Boolean.compare(o1.isHitDone(), o2.isHitDone()));
         return result;
     }
 
