@@ -95,7 +95,7 @@ public class ContextTreeManager {
 
     public void save() throws IOException {
         File contextTreeFile = appConfig.getContextFile();
-        log.debug("Saving context file to {}", contextTreeFile);
+        log.trace("Saving context file to {}", contextTreeFile);
         try (OutputStream os = new FileOutputStream(contextTreeFile)) {
             String json = objectMapper.writeValueAsString(contextTree);
             IOUtils.write(json, os, Charset.defaultCharset());

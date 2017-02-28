@@ -357,6 +357,7 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
             Map<String, String> assignmentAnswers = entry.getValue();
             Set<String> ids = assignmentAnswers.keySet().stream()
                     .filter(key -> key.endsWith("_event"))
+                    .map(key -> StringUtils.substringBefore(key, "_event"))
                     .collect(toSet());
 
             for (String id : ids) {
