@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public interface HitManager {
+    boolean isSandbox();
+
     String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries);
 
     List<UpHitResult> getUpHitForReview(String hitId);

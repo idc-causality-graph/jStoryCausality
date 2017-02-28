@@ -150,6 +150,10 @@ public class HitManagerMockImpl implements HitManager {
         this.objectMapper = objectMapper;
     }
 
+    @Override
+    public boolean isSandbox(){
+        return false;
+    }
 
     @SneakyThrows
     private HitStorage readDb() {

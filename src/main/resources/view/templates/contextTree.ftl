@@ -122,6 +122,7 @@
 
             <div class="btn-group" role="group">
                 <div class="btn-group mr-3" role="group">
+                    <#if !sandbox><button class="btn btn-danger">PRODUCTION</button></#if>
                     <button class="btn btn-secondary"
                             formaction="/contextTree/progressUp" formmethod="post" form="frm_progressup"
                             type="submit" ${(phase!='UP_PHASE')?then('disabled','')}>

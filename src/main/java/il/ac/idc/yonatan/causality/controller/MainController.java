@@ -33,6 +33,7 @@ public class MainController {
         model.addAttribute("phase", contextTree.getPhase());
         model.addAttribute("completedCausalityHitIds", contextTree.getCompletedCausalityHits());
         model.addAttribute("causalityHitIds", contextTree.getCausalityHits());
+        model.addAttribute("sandbox", hitManager.isSandbox());
         return "contextTree";
     }
 
