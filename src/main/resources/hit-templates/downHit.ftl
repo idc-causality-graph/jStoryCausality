@@ -68,6 +68,7 @@
                             <li>${parentSummary}</li>
                         </#list>
                         </ul>
+                        <hr/>
 
 
                     <#list childrenIdsAndSummaries as childIdAndSummary>
