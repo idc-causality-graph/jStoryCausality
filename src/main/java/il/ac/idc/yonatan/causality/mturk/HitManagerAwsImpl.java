@@ -45,6 +45,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jdom2.Document;
@@ -152,8 +153,10 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         setAwsRequestHeaders(createHIT);
 
         CreateHITRequest chr = new CreateHITRequest();
-        chr.setTitle(title);
-        chr.setDescription(description);
+
+        String tag = " [" + RandomStringUtils.randomAlphanumeric(4) + "]";
+        chr.setTitle(title + tag);
+        chr.setDescription(description + tag);
         chr.setAssignmentDurationInSeconds(TimeUnit.MINUTES.toSeconds(durationInMinutes));
         chr.setLifetimeInSeconds(TimeUnit.MINUTES.toSeconds(lifetimeInMinutes));
 
@@ -231,7 +234,6 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
         String timestamp = now.format(df);
-        System.out.println(timestamp);
         BeanUtils.setProperty(request, "timestamp", new XMLGregorianCalendarImpl(GregorianCalendar.from(now)));
 
         String signature = calculateRFC2104HMAC("AWSMechanicalTurkRequester" + operation + timestamp,
@@ -292,7 +294,6 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     /**
-     *
      * @param hitId
      * @return map from assignmentId -> (question -> answer)
      */
@@ -398,7 +399,6 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
                     .map(key -> StringUtils.substringBeforeLast(key, "_causes"))
                     .collect(toSet());
 
-            System.out.println(hitAnswers);
             for (String key : keys) {
                 String causes = assignmentAnswers.get(key + "_causes").trim();
                 String noncauses = assignmentAnswers.get(key + "_noncauses").trim();

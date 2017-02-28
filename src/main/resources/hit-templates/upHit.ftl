@@ -46,7 +46,6 @@
                     <p>Your writing must be original and can not simply be a copy of part of the text. We strive to
                         award all assignments so please write in your own words using good grammar and spelling.</p>
                 </div>
-                </p>
             </div>
         </div>
         <!-- End Instructions -->
@@ -62,7 +61,8 @@
                 <#list childIdToSummaries as childId,summaries>
                     <p>
                         The following is a group of summaries. All summaries in this group are summaries of
-                        the same original text. Please choose the best summary for this group.
+                        the same original text. Please choose the best summary for this group. If there's only a single
+                        option, please choose it.
                     </p>
                     <div class="panel panel-default">
                         <div class="panel-body">
@@ -119,8 +119,9 @@
                          class="text-danger"
                          style="display: none">
                     </div>
+                </div>
+            </div>
         </section>
-        </div>
     </section>
 <@c.submit_button />
 </form>
