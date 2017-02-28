@@ -3,7 +3,6 @@ package il.ac.idc.yonatan.causality.contexttree;
 import il.ac.idc.yonatan.causality.config.AppConfig;
 import il.ac.idc.yonatan.causality.mturk.HitManager;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.stereotype.Service;
@@ -14,8 +13,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
@@ -49,9 +46,8 @@ public class DownPhaseManager implements PhaseManager {
         if (rootNode.getBestSummaryVotes().isEmpty()) {
             return newArrayList("Missing best summary choice for the root node");
         }
-        // All hits for down phase are created together.
-        Node aLeafNode = contextTree.getLeafNodeLevel().getNodes().get(0);
-        if (StringUtils.isNotEmpty(aLeafNode.getDownHitId())) {
+        // All hits for down phase are created together - it's enough to see one with
+        if (contextTree.areDownPhaseHitCreated()) {
             return newArrayList("HITs already created for DOWN_PHASE");
         }
         return Collections.emptyList();
@@ -95,11 +91,8 @@ public class DownPhaseManager implements PhaseManager {
                     .map(child -> Pair.of(child.getId(), child.getBestSummary()))
                     .collect(toList());
 
-//            for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
-                String hitId = hitManager.createDownHit(parentsSummaries, childrenIdsAndSummaries, node.isLeaf());
-                node.setDownHitId(hitId);
-//                node.getDownHitIds().add(hitId);
-//            }
+            String hitId = hitManager.createDownHit(parentsSummaries, childrenIdsAndSummaries, node.isLeaf());
+            node.setDownHitId(hitId);
         }
         contextTreeManager.save();
 
@@ -129,7 +122,7 @@ public class DownPhaseManager implements PhaseManager {
 
             //Check if are done. If so, perform the next step
             boolean isAllNodesDone = contextTree.getAllNodes().stream()
-                    .allMatch(n->n.isDownPhaseDone(appConfig.getReplicationFactor()));
+                    .allMatch(n -> n.isDownPhaseDone(appConfig.getReplicationFactor()));
 //                            Node::isDownPhaseDone);
             if (isAllNodesDone) {
                 // down phase is done. we have a full context tree.
@@ -166,7 +159,7 @@ public class DownPhaseManager implements PhaseManager {
         List<String> rootNodeSummaries = contextTree.getRootNode().getSummaries();
         Collection<Node> nodes = contextTree.getAllNodes();
         for (Node node : nodes) {
-            if (node.isDownPhaseDone(appConfig.getReplicationFactor())){
+            if (node.isDownPhaseDone(appConfig.getReplicationFactor())) {
                 continue;
             }
             String downHitId = node.getDownHitId();

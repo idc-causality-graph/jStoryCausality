@@ -67,7 +67,7 @@ public class ContextTreeManager {
             }
             save();
         } else {
-            log.debug("Loading context file from {}", contextFile);
+            log.trace("Loading context file from {}", contextFile);
             try (InputStream is = new FileInputStream(contextFile)) {
                 contextTree = objectMapper.readValue(is, ContextTree.class);
             }

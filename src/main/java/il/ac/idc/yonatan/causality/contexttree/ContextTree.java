@@ -74,4 +74,8 @@ public class ContextTree {
         return Sets.difference(causalityHits, completedCausalityHits).immutableCopy();
     }
 
+    public boolean areDownPhaseHitCreated(){
+        return nodeRepository.values().stream().anyMatch(node->node.getDownHitId()!=null);
+    }
+
 }
