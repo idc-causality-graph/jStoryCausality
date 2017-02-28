@@ -55,13 +55,11 @@ public class UpPhaseManager implements PhaseManager {
         }
 
         List<Node> nodes = nodeLevel.getNodes();
-        System.out.println("\n\n\n\nTODOD!\n\n\n");
-//        for (Node node : nodes) {
-//            if (!node.isUpPhaseDone(appConfig.getReplicationFactor())) {
-////            if (node.getUpHitIds().size() != node.getCompletedUpHitIds().size()) {
-//                errors.add("Node " + node.getId() + " still need review");
-//            }
-//        }
+        for (Node node : nodes) {
+            if (node.getUpHitId() != null && !node.isUpPhaseDone(appConfig.getReplicationFactor())) {
+                errors.add("Node <a href=\"#" + node.getId() + "\">" + node.getId() + "</a> still not done");
+            }
+        }
         return errors;
     }
 
