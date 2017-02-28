@@ -59,11 +59,9 @@ public class CausalityPhaseManager implements PhaseManager {
             Double score = leaf.getNormalizedImportanceScore();
             if (score > t1) {
                 leaf.getCausalityData().setPotentiallyImportant(true);
-            } else {
-                if (previousScore > score && previousScore > t2 && previousNode != null) {
-                    // a local maximum with threshold greater than t2
-                    previousNode.getCausalityData().setPotentiallyImportant(true);
-                }
+            } else if (previousScore > score && previousScore > t2 && previousNode != null) {
+                // a local maximum with threshold greater than t2
+                previousNode.getCausalityData().setPotentiallyImportant(true);
             }
             previousNode = leaf;
             previousScore = score;
@@ -265,7 +263,7 @@ public class CausalityPhaseManager implements PhaseManager {
                 Node causeNode = contextTree.getNode(causeNodeId);
                 causeNode.getCausalityData().getTargetNodeIds().add(queryNodeId);
             }
-            Set<String> completedAssignments = contextTree.getCompletedCausalityAssignmentsByHit().computeIfAbsent(hitId,x->new HashSet<>());
+            Set<String> completedAssignments = contextTree.getCompletedCausalityAssignmentsByHit().computeIfAbsent(hitId, x -> new HashSet<>());
             completedAssignments.add(assignmentId);
             if (completedAssignments.size() == appConfig.getCausalityReplicaFactor()) {
                 contextTree.getCompletedCausalityHits().add(hitId);
