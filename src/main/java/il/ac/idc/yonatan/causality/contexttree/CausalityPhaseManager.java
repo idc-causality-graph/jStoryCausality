@@ -331,4 +331,9 @@ public class CausalityPhaseManager implements PhaseManager {
         return result;
     }
 
+    public void relaunchHit(String hitId) {
+        log.error("This operation not supported yet for causality phase");
+        throw new UnsupportedOperationException("relaunchHit for causality phase");
+
+    }
 }

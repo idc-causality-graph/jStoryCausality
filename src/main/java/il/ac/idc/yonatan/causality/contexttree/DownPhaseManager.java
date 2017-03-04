@@ -1,8 +1,10 @@
 package il.ac.idc.yonatan.causality.contexttree;
 
+import com.google.common.base.Preconditions;
 import il.ac.idc.yonatan.causality.config.AppConfig;
 import il.ac.idc.yonatan.causality.mturk.HitManager;
 import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.stereotype.Service;
@@ -66,6 +68,18 @@ public class DownPhaseManager implements PhaseManager {
         return parentsSummaries;
     }
 
+    private void createHitForNode(Node node, int replicas) {
+        List<String> parentsSummaries = getParentsSummaries(node);
+
+        List<Node> children = node.getChildren();
+        List<Pair<String, String>> childrenIdsAndSummaries = children.stream()
+                .map(child -> Pair.of(child.getId(), child.getBestSummary()))
+                .collect(toList());
+
+        String hitId = hitManager.createDownHit(parentsSummaries, childrenIdsAndSummaries, node.isLeaf(), replicas);
+        node.setDownHitId(hitId);
+    }
+
     public void createHits() throws IOException {
         ContextTree contextTree = contextTreeManager.getContextTree();
         Node rootNode = contextTree.getRootNode();
@@ -84,15 +98,7 @@ public class DownPhaseManager implements PhaseManager {
                 node.setNormalizedImportanceScore(1.0);
             }
 
-            List<String> parentsSummaries = getParentsSummaries(node);
-
-            List<Node> children = node.getChildren();
-            List<Pair<String, String>> childrenIdsAndSummaries = children.stream()
-                    .map(child -> Pair.of(child.getId(), child.getBestSummary()))
-                    .collect(toList());
-
-            String hitId = hitManager.createDownHit(parentsSummaries, childrenIdsAndSummaries, node.isLeaf());
-            node.setDownHitId(hitId);
+            createHitForNode(node, appConfig.getReplicationFactor());
         }
         contextTreeManager.save();
 
@@ -117,7 +123,7 @@ public class DownPhaseManager implements PhaseManager {
                 child.getEventImportanceWorkerNormalizedScores().add((double) score / maxWorkerScore);
                 child.getMostImportantEvents().add(mostImportantEvent);
             }
-            node.getCompletedDownAssignmentsIds().add(assignmentId);
+            node.getCompletedDownAssignmentsIds().add(hitId + ":" + assignmentId);
 //            node.getCompletedDownHitIds().add(hitId);
 
             //Check if are done. If so, perform the next step
@@ -156,7 +162,6 @@ public class DownPhaseManager implements PhaseManager {
         if (contextTree.getPhase() != Phases.DOWN_PHASE) {
             return result;
         }
-        List<String> rootNodeSummaries = contextTree.getRootNode().getSummaries();
         Collection<Node> nodes = contextTree.getAllNodes();
         for (Node node : nodes) {
             if (node.isDownPhaseDone(appConfig.getReplicationFactor())) {
@@ -189,6 +194,19 @@ public class DownPhaseManager implements PhaseManager {
             }
         }
         return result;
+    }
+
+    public void relaunchHit(String hitId) throws IOException {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(hitId), "hitId cannot be empty");
+        ContextTree contextTree = contextTreeManager.getContextTree();
+        Node node = contextTree.getNodeRepository().values()
+                .stream().filter(n -> hitId.equals(n.getDownHitId()))
+                .findFirst().get();
+
+        int replicationFactor = appConfig.getReplicationFactor();
+        int assignmentDoneCount = node.getCompletedDownAssignmentsIds().size();
+        createHitForNode(node, replicationFactor - assignmentDoneCount);
+        contextTreeManager.save();
     }
 
 }

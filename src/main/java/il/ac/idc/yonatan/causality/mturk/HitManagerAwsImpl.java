@@ -142,13 +142,14 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     @Override
-    public String createDownHit(List<String> parentsSummaries, List<Pair<String, String>> childrenIdsAndSummaries, boolean isLeaf) {
+    public String createDownHit(List<String> parentsSummaries, List<Pair<String, String>> childrenIdsAndSummaries,
+                                boolean isLeaf, int replicas) {
         String downHitHtml = renderHitTemplate("downHit.ftl",
                 ImmutableMap.of("parentsSummaries", parentsSummaries, "childrenIdsAndSummaries", childrenIdsAndSummaries));
         return createHit(downHitHtml, "Decide what is the most important event",
                 "After reading a summary, you should decide what is the most important event in it",
                 appConfig.getDownHitReward(),
-                appConfig.getReplicationFactor(),
+                replicas,
                 newArrayList("summary", "vote"));
     }
 
@@ -164,13 +165,13 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
     }
 
     @Override
-    public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries) {
+    public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries, int replicas) {
         String upHitHtml = renderHitTemplate("upHit.ftl",
                 ImmutableMap.of("childIdToSummaries", childIdToSummaries));
         return createHit(upHitHtml, "Make a summery of text and vote for a summary",
                 "Choose between summaries, and then make a summary of your own",
                 appConfig.getUpHitReward(),
-                appConfig.getReplicationFactor(),
+                replicas,
                 newArrayList("writing", "summary", "vote"));
     }
 

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -34,6 +35,13 @@ public class UpPhaseController extends AbsPhaseController {
     public UpPhaseController(ObjectMapper objectMapper, UpPhaseManager upPhaseManager) {
         this.objectMapper = objectMapper;
         this.upPhaseManager = upPhaseManager;
+    }
+
+    @PostMapping(value = "contextTree/upPhase/relaunch/{hitId}")
+    public String relaunchUpHit(@PathVariable String hitId) throws IOException {
+        upPhaseManager.relaunchHit(hitId);
+        return "redirect:/contextTree";
+
     }
 
     @PostMapping(value = "contextTree/reviewsUpPhase")

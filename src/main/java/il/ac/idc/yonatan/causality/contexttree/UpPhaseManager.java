@@ -7,6 +7,7 @@ import il.ac.idc.yonatan.causality.mturk.HitManager;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -63,7 +64,24 @@ public class UpPhaseManager implements PhaseManager {
         return errors;
     }
 
+    private void createHitForNode(Node node, int replicas) {
+        List<Node> children = node.getChildren();
+        LinkedHashMap<String, List<String>> childIdToSummaries = new LinkedHashMap<>();
+
+        for (Node child : children) {
+            for (String summary : child.getSummaries()) {
+                List<String> summaries = childIdToSummaries.getOrDefault(child.getId(), new ArrayList<>(0));
+                summaries.add(summary);
+                childIdToSummaries.put(child.getId(), summaries);
+            }
+        }
+        node.setUpHitTaskData(childIdToSummaries);
+        String hitId = hitManager.createUpHit(childIdToSummaries, replicas);
+        node.setUpHitId(hitId);
+    }
+
     public void createHits() throws IOException {
+        int replicationFactor = appConfig.getReplicationFactor();
         ContextTree contextTree = contextTreeManager.getContextTree();
         NodeLevel nodeLevel = getCurrentUpPhaseNodeLevel(contextTree);
         if (nodeLevel == null) {
@@ -72,19 +90,7 @@ public class UpPhaseManager implements PhaseManager {
         }
         List<Node> nodes = nodeLevel.getNodes();
         for (Node node : nodes) {
-            List<Node> children = node.getChildren();
-            LinkedHashMap<String, List<String>> childIdToSummaries = new LinkedHashMap<>();
-
-            for (Node child : children) {
-                for (String summary : child.getSummaries()) {
-                    List<String> summaries = childIdToSummaries.getOrDefault(child.getId(), new ArrayList<>(0));
-                    summaries.add(summary);
-                    childIdToSummaries.put(child.getId(), summaries);
-                }
-            }
-            node.setUpHitTaskData(childIdToSummaries);
-            String hitId = hitManager.createUpHit(childIdToSummaries);
-            node.setUpHitId(hitId);
+            createHitForNode(node, replicationFactor);
         }
         contextTreeManager.save();
     }
@@ -102,7 +108,7 @@ public class UpPhaseManager implements PhaseManager {
 
         if (hitApproved) {
             node.getSummaries().add(summary);
-            node.getCompletedUpAssignmentsIds().add(assignmentId);
+            node.getCompletedUpAssignmentsIds().add(hitId + ":" + assignmentId);
             for (Node childNode : node.getChildren()) {
                 // this is why children get so many votes.
                 String childId = childNode.getId();
@@ -199,4 +205,16 @@ public class UpPhaseManager implements PhaseManager {
         return Base64.getEncoder().encodeToString(json.getBytes());
     }
 
+    public void relaunchHit(String hitId) throws IOException {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(hitId), "hitId must not be empty");
+        ContextTree contextTree = contextTreeManager.getContextTree();
+        Node node = contextTree.getNodeRepository().values()
+                .stream().filter(n -> hitId.equals(n.getUpHitId()))
+                .findFirst().get();
+
+        int replicationFactor = appConfig.getReplicationFactor();
+        int assignmentDoneCount = node.getCompletedUpAssignmentsIds().size();
+        createHitForNode(node, replicationFactor - assignmentDoneCount);
+        contextTreeManager.save();
+    }
 }

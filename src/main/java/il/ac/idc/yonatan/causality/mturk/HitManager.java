@@ -12,7 +12,7 @@ import java.util.List;
 public interface HitManager {
     boolean isSandbox();
 
-    String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries);
+    String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries, int replicas);
 
     List<UpHitResult> getUpHitForReview(String hitId);
 
@@ -26,7 +26,8 @@ public interface HitManager {
 
     void submitCausalityHitReview(String hitId, String assignmentId, boolean hitApproved, String reason);
 
-    String createDownHit(List<String> parentsSummaries, List<Pair<String,String>> childrenIdsAndSummaries, boolean isLeaf);
+    String createDownHit(List<String> parentsSummaries, List<Pair<String,String>> childrenIdsAndSummaries,
+                         boolean isLeaf, int replicas);
 
     void reset();
 

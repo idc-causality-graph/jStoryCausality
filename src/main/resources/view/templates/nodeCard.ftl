@@ -32,7 +32,15 @@
         </div>
     <#if node.upHitId??>
         <div class="form-group row mb-0">
-            <label class="col-sm-2 col-form-label">Up HIT</label>
+            <label class="col-sm-2 col-form-label">Up HIT
+                <#if !node.isUpPhaseDone(repFactor)>
+                    <form style="display: inline" action="contextTree/upPhase/relaunch/${node.upHitId}" method="post">
+                        <button type="submit" class="btn btn-link relaunch" style="cursor: pointer">
+                            <i class="fa fa-refresh" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                </#if>
+            </label>
             <div class="col-sm-10">
                 <p class="form-control-static">${node.upHitId}: (${node.completedUpAssignmentsIds?size}/${repFactor})
                 ${node.completedUpAssignmentsIds?join(', ')}
@@ -79,7 +87,15 @@
     <#if isRoot></form></#if>
     <#if (node.downHitId??)>
         <div class="form-group row">
-            <label class="col-sm-2 col-form-label">Down HIT</label>
+            <label class="col-sm-2 col-form-label">Down HIT
+                <#if !node.isDownPhaseDone(repFactor)>
+                    <form style="display: inline" action="contextTree/downPhase/relaunch/${node.downHitId}" method="post">
+                        <button type="submit" class="btn btn-link relaunch" style="cursor: pointer">
+                            <i class="fa fa-refresh" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                </#if>
+            </label>
             <div class="col-sm-10">
                 <p class="form-control-static">${node.downHitId}: (${node.completedDownAssignmentsIds?size}/${repFactor})
                 ${node.completedDownAssignmentsIds?join(', ')}

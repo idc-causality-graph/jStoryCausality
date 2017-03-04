@@ -152,7 +152,7 @@ public class HitManagerMockImpl implements HitManager {
 
     @Override
     public boolean isSandbox(){
-        return false;
+        return true;
     }
 
     @SneakyThrows
@@ -180,13 +180,13 @@ public class HitManagerMockImpl implements HitManager {
     }
 
     @Override
-    public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries) {
+    public String createUpHit(LinkedHashMap<String, List<String>> childIdToSummaries, int replicas) {
         HitStorage db = readDb();
         String hitId = UP_HIT_PREFIX + RandomStringUtils.randomAlphanumeric(8);
         UpHitStorage upHitStorage = new UpHitStorage();
         upHitStorage.setChildIdToSummaries(childIdToSummaries);
         db.getUpHitStorage().put(hitId, upHitStorage);
-        for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
+        for (int i = 0; i < replicas; i++) {
             upHitStorage.getUpAssignments().add(createUpAssignment());
         }
         saveDb(db);
@@ -228,7 +228,8 @@ public class HitManagerMockImpl implements HitManager {
     }
 
     @Override
-    public String createDownHit(List<String> parentsSummaries, List<Pair<String, String>> childrenIdsAndSummaries, boolean isLeaf) {
+    public String createDownHit(List<String> parentsSummaries, List<Pair<String, String>> childrenIdsAndSummaries,
+                                boolean isLeaf, int replicas) {
         HitStorage db = readDb();
         String hitId = DOWN_HIT_PREFIX + RandomStringUtils.randomAlphanumeric(8);
 
@@ -238,7 +239,7 @@ public class HitManagerMockImpl implements HitManager {
         downHitStorage.setLeaf(isLeaf);
         downHitStorage.setParentsSummaries(parentsSummaries);
 
-        for (int i = 0; i < appConfig.getReplicationFactor(); i++) {
+        for (int i = 0; i < replicas; i++) {
             downHitStorage.getDownAssignments().add(createDownAssignment());
         }
         saveDb(db);

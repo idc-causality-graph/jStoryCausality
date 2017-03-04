@@ -4,6 +4,7 @@
     <title>Context Tree</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-grid.min.css">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
     <script src="/js/jquery-3.1.1.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <style>
@@ -77,6 +78,16 @@
                 return result;
             });
             $("#reset_btn").removeAttr("disabled");
+
+            $("button.relaunch").click(function () {
+                var sure = confirm("Relaunch it?");
+                if (!sure) {
+                    console.log("not sure!");
+                    return false;
+                }
+                return true;
+
+            });
         });
     </script>
 
@@ -110,11 +121,11 @@
                     <a class="nav-link" target="_blank" href="/contextTree/reviewsCausalityPhase">Review causality
                         HITs</a>
                 </li>
-                <#if sandbox>
+            <#if sandbox>
                 <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/hits">HIT Worker UI</a>
                 </li>
-                </#if>
+            </#if>
             </ui>
         </div>
     </nav>
@@ -124,11 +135,12 @@
 
             <div class="btn-group" role="group">
                 <div class="btn-group mr-3" role="group">
-                    <#if !sandbox><button class="btn btn-danger">PRODUCTION</button></#if>
+                <#if !sandbox>
+                    <button class="btn btn-danger">PRODUCTION</button></#if>
                     <button class="btn btn-secondary"
                             formaction="/contextTree/progressUp" formmethod="post" form="frm_progressup"
                             type="submit" ${(phase!='UP_PHASE')?then('disabled','')}>
-                    Progress up hits
+                        Progress up hits
                     </button>
                     <button class="btn btn-secondary"
                             formaction="/contextTree/progressDown" formmethod="post" form="frm_progressup"
