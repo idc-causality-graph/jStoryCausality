@@ -150,6 +150,7 @@
                             formaction="/contextTree/progressCausality" formmethod="post" form="frm_progressup"
                             type="submit" ${(phase!='CAUSALITY_PHASE')?then('disabled','')}>Progress causality hits
                     </button>
+                    <a class="btn btn-secondary" href="/contextTree?leafOnly=${(!leafOnly)?c}">Show ${leafOnly?then("all nodes", "just leafs")}</a>
                 </div>
                 <div class="btn-group ml-2" role="group">
                     <a class="btn btn-secondary" href="contextTree">Reload</a>

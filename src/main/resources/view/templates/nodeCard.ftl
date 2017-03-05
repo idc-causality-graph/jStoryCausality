@@ -7,6 +7,7 @@
     <#assign isRoot=true />
     <#if node.parent??>
         <#assign isRoot=false />
+        <#if !leafOnly>
         <div class="form-group row mb-0">
             <label class="col-sm-2 col-form-label">Parent</label>
             <div class="col-sm-10">
@@ -15,6 +16,7 @@
                 </p>
             </div>
         </div>
+        </#if>
         <#if (!node.leaf)>
             <div class="form-group row mb-0">
                 <label class="col-sm-2 col-form-label">Up phase done?</label>

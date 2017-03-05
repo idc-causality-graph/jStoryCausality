@@ -102,9 +102,9 @@ public class ContextTreeManager {
         }
     }
 
-    public String dumpHtml() {
+    public String dumpHtml(boolean leafOnly) {
         return new ContextTreeHtml(contextTree, fmConfig,
-                appConfig.getReplicationFactor(), appConfig.getCausalityReplicaFactor()).create();
+                appConfig.getReplicationFactor(), appConfig.getCausalityReplicaFactor()).create(leafOnly);
     }
 
     private void addUpperLevel(boolean leafLevel) {

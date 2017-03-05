@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 
@@ -27,10 +28,11 @@ public class MainController {
     }
 
     @GetMapping("contextTree")
-    public String getContextTree(Model model) {
+    public String getContextTree(Model model, @RequestParam("leafOnly") boolean leafOnly) {
         ContextTree contextTree = contextTreeManager.getContextTree();
-        model.addAttribute("htmlTree", contextTreeManager.dumpHtml());
+        model.addAttribute("htmlTree", contextTreeManager.dumpHtml(leafOnly));
         model.addAttribute("phase", contextTree.getPhase());
+        model.addAttribute("leafOnly", leafOnly);
         model.addAttribute("completedCausalityHitIds", contextTree.getCompletedCausalityHits());
         model.addAttribute("causalityHitIds", contextTree.getCausalityHits());
         model.addAttribute("sandbox", hitManager.isSandbox());
