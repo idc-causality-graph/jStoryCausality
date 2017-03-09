@@ -58,6 +58,10 @@ public class ContextTree {
         return nodeLevels.getFirst();
     }
 
+    public NodeLevel getMetaLeafNodeLevel(){
+        return nodeLevels.get(1);
+    }
+
 
     public Collection<Node> getAllNodes() {
         return getNodeRepository().values();

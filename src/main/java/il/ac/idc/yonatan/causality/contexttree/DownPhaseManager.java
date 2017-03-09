@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
@@ -91,6 +92,9 @@ public class DownPhaseManager implements PhaseManager {
                 // No need to do that for leaf - has no children!
                 continue;
             }
+            if (appConfig.isUseMetaLeafs() && node.isMetaLeaf()) {
+                continue;
+            }
             if (node.getId().equals(contextTree.getRootNodeId())) {
                 //root node, a single maximum importance rating
                 node.getEventImportanceScores().add(7);
@@ -122,14 +126,28 @@ public class DownPhaseManager implements PhaseManager {
                 child.getEventImportanceScores().add(score);
                 child.getEventImportanceWorkerNormalizedScores().add((double) score / maxWorkerScore);
                 child.getMostImportantEvents().add(mostImportantEvent);
+                if (appConfig.isUseMetaLeafs() && child.isMetaLeaf()) {
+                    // if this is a metaleaf, and we are in metaleaf mode, copy the impotency data to the actual
+                    // leaf
+                    Node grandchild = child.getChildren().get(0);
+                    grandchild.getEventImportanceScores().add(score);
+                    grandchild.getEventImportanceWorkerNormalizedScores().add((double) score / maxWorkerScore);
+                    grandchild.getMostImportantEvents().add(mostImportantEvent);
+                }
             }
             node.getCompletedDownAssignmentsIds().add(hitId + ":" + assignmentId);
 //            node.getCompletedDownHitIds().add(hitId);
 
             //Check if are done. If so, perform the next step
-            boolean isAllNodesDone = contextTree.getAllNodes().stream()
-                    .allMatch(n -> n.isDownPhaseDone(appConfig.getReplicationFactor()));
-//                            Node::isDownPhaseDone);
+            Stream<Node> nodeStream = contextTree.getAllNodes().stream();
+
+            if (appConfig.isUseMetaLeafs()) {
+                // Skip metaleaf level if we are in "metaleaf" mode
+                nodeStream=nodeStream.filter(n -> !n.isMetaLeaf());
+
+            }
+            boolean isAllNodesDone = nodeStream.allMatch(n -> n.isDownPhaseDone(appConfig.getReplicationFactor()));
+
             if (isAllNodesDone) {
                 // down phase is done. we have a full context tree.
                 // now, normalize it!

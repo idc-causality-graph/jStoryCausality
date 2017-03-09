@@ -28,7 +28,7 @@ public class MainController {
     }
 
     @GetMapping("contextTree")
-    public String getContextTree(Model model, @RequestParam("leafOnly") boolean leafOnly) {
+    public String getContextTree(Model model, @RequestParam(value = "leafOnly", defaultValue = "false") boolean leafOnly) {
         ContextTree contextTree = contextTreeManager.getContextTree();
         model.addAttribute("htmlTree", contextTreeManager.dumpHtml(leafOnly));
         model.addAttribute("phase", contextTree.getPhase());

@@ -3,12 +3,9 @@ package il.ac.idc.yonatan.causality.config;
 import lombok.Data;
 import lombok.ToString;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.hibernate.validator.constraints.Range;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.File;
@@ -55,4 +52,13 @@ public class AppConfig {
 
     private int hitLifetimeInMinutes;
     private int hitDurationInMinutes;
+
+    /**
+     * in Metaleaf mode, we use summaries of meta leaf (the text of the parent of the leaf, which has only one child
+     * in that mode)
+     * @return
+     */
+    public boolean isUseMetaLeafs() {
+        return leafBranchFactor == 1;
+    }
 }

@@ -51,7 +51,12 @@ public class CausalityPhaseManager implements PhaseManager {
         double t2 = t1 / 2;
 
         ContextTree contextTree = contextTreeManager.getContextTree();
-        NodeLevel leafLevel = contextTree.getLeafNodeLevel();
+        NodeLevel leafLevel;
+        if (appConfig.isUseMetaLeafs()) {
+            leafLevel = contextTree.getMetaLeafNodeLevel();
+        } else {
+            leafLevel = contextTree.getLeafNodeLevel();
+        }
         List<Node> leafs = leafLevel.getNodes();
         double previousScore = -1;
         Node previousNode = null;
@@ -94,7 +99,13 @@ public class CausalityPhaseManager implements PhaseManager {
 
     private List<NodeLevel> createPruneNodeLevels(List<NodeLevel> unprunedNodeLevels) {
         List<NodeLevel> pruneNodeLevels = new ArrayList<>();
+        boolean leafLevel=true;
         for (NodeLevel unprunedNodeLevel : unprunedNodeLevels) {
+            if (appConfig.isUseMetaLeafs() && leafLevel){
+                leafLevel=false;
+                continue;
+            }
+            leafLevel=false;
             List<String> prunedNodeIds = unprunedNodeLevel.getNodes().stream()
                     .filter(node -> node.getCausalityData().isPotentiallyImportant())
                     .map(Node::getId)
@@ -268,6 +279,7 @@ public class CausalityPhaseManager implements PhaseManager {
             if (completedAssignments.size() == appConfig.getCausalityReplicaFactor()) {
                 contextTree.getCompletedCausalityHits().add(hitId);
             }
+
             if (contextTree.getCausalityLevelStep() == 0 && contextTree.getUncompletedCausalityHits().isEmpty()) {
                 // Finished last HIT in the leaf level
                 contextTree.setPhase(Phases.DONE);

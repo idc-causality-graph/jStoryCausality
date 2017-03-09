@@ -89,7 +89,6 @@ public class Node {
     public boolean isDownPhaseDone(int repFactor) {
         //No down phase for leafs.
         return isLeaf() || (completedDownAssignmentsIds.size() == repFactor);
-//                downHitIds.size() > 0 && downHitIds.size() == completedDownHitIds.size());
     }
 
     public boolean isUpPhaseDone(int repFactor) {
@@ -111,10 +110,9 @@ public class Node {
         return getNode(parentNodeId);
     }
 
-//    public boolean isUpPhaseDone() {
-//        return upHitIds.size() > 0 && upHitIds.size() == completedUpHitIds.size();
-//    }
-
+    public boolean isMetaLeaf() {
+        return !isLeaf() && getChildren().stream().allMatch(Node::isLeaf);
+    }
 
     /**
      * This is the average [1-7] of the scores the workers has given
