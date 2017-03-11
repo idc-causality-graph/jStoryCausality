@@ -39,7 +39,7 @@
                     <label>Parents summaries</label>
                     <ul>
                         <#list hitForReview.parentsSummaries as parentSaummary>
-                            <li>${parentSaummary}</li>
+                            <li>${parentSaummary?html?replace('\n', '<br>')}</li>
                         </#list>
                     </ul>
 
@@ -49,7 +49,7 @@
                             <div class="form-group row">
                                 <label class="col-sm-2 form-control-label">Summary</label>
                                 <div class="col-sm-10">
-                                    <span class="form-control-static">${hitForReview.childIdToSummary[idAndScoreAndEvent.left]}</span>
+                                    <span class="form-control-static">${hitForReview.childIdToSummary[idAndScoreAndEvent.left]?html?replace('\n', '<br>')}</span>
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -62,7 +62,7 @@
                             <div class="form-group row">
                                 <label class="col-sm-2 form-control-label">Important event</label>
                                 <div class="col-sm-10"><span class="form-control-static">
-                                ${idAndScoreAndEvent.right}
+                                ${idAndScoreAndEvent.right?html?replace('\n', '<br>')}
                                 </span>
                                 </div>
                             </div>

@@ -38,14 +38,14 @@
                 <div class="form-group row">
                     <label class="col-sm-1 form-control-label">Task text</label>
                     <div class="col-sm-11">
-                        <span class="form-control-static">${hitForReview.taskText}</span>
+                        <span class="form-control-static">${hitForReview.taskText?html?replace('\n', '<br>')}</span>
                     </div>
                 </div>
                 <hr/>
                 <div class="form-group row">
                     <label class="col-sm-1 form-control-label">Summary</label>
                     <div class="col-sm-11">
-                        <span class="form-control-static">${hitForReview.summary}</span>
+                        <span class="form-control-static">${hitForReview.summary?html?replace('\n', '<br>')}</span>
                     </div>
                 </div>
                 <div class="form-group row">

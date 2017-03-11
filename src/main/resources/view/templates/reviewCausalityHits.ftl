@@ -51,7 +51,7 @@
                     <div class="form-group row">
                         <label class="col-sm-2 form-control-label">Query node (${causalityData.queryNodeId})</label>
                         <div class="col-sm-10">
-                            <span class="form-control-static">${causalityData.queryText}</span>
+                            <span class="form-control-static">${causalityData.queryText?html?replace('\n', '<br>')}</span>
                         </div>
                     </div>
                     <label>Causes</label><br>
@@ -66,7 +66,7 @@
                                     (${nodeTextRel.left})
                                 </label>
                                 <div class="col-sm-10">
-                                    <span class="form-control-static">${nodeTextRel.middle}</span>
+                                    <span class="form-control-static">${nodeTextRel.middle?html?replace('\n', '<br>')}</span>
                                 </div>
                             </div>
                         </#list>

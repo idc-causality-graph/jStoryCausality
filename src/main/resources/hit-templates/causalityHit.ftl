@@ -106,7 +106,7 @@
                         <div class="panel-body">
                             <div class="form-group">
                                 <label class="form-control-label">Summary</label>
-                                <div class="form-control-static">${globalSummary}</div>
+                                <div class="form-control-static">${globalSummary?html?replace('\n', '<br>')}</div>
                             </div>
                             <hr/>
                             <ul>
@@ -115,7 +115,7 @@
                                 <div class="form-group">
                                     <label class="form-control-label">Event</label>
                                     <div class="form-control-static">
-                                    ${causalityQuestion.question}
+                                    ${causalityQuestion.question?html?replace('\n', '<br>')}
                                     </div>
                                 </div>
 
@@ -129,7 +129,7 @@
                                                    class="form-check-input"
                                                    name="${questionNodeId}[]"
                                                    value="${cause.nodeId}">
-                                        ${cause.text}
+                                        ${cause.text?html?replace('\n', '<br>')}
                                         </label>
                                     </div>
                                 </#list>

@@ -76,7 +76,7 @@
                                                    name="${childId}"
                                                    data-error="#${childId}_err"
                                                    value="${summary?index}">
-                                        ${summary}
+                                        ${summary?html?replace('\n', '<br>')}
                                         </label>
                                     </div>
                                 </#list>

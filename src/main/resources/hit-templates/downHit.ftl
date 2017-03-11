@@ -65,7 +65,7 @@
                         <label>Summaries</label>
                         <ul>
                         <#list parentsSummaries as parentSummary>
-                            <li>${parentSummary}</li>
+                            <li>${parentSummary?html?replace('\n', '<br>')}</li>
                         </#list>
                         </ul>
                         <hr/>
@@ -74,7 +74,7 @@
                     <#list childrenIdsAndSummaries as childIdAndSummary>
                         <div class="form-group">
                             <label class="form-control-label">Portion of the story</label>
-                            <div class="form-control-static">${childIdAndSummary.right}</div>
+                            <div class="form-control-static">${childIdAndSummary.right?html?replace('\n', '<br>')}</div>
                         </div>
                         <div class="form-group">
                             <label class="form-control-label">Please describe the most important event in the

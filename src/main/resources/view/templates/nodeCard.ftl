@@ -77,7 +77,7 @@
                 <#if (!isRoot && summary?index==bestSummaryIdx)></u></#if>
             </label>
             <div class="col-sm-10">
-                <p class="form-control-static">${summary}</p>
+                <p class="form-control-static">${summary?html?replace('\n', '<br>')}</p>
             </div>
 
         </#list>

@@ -59,7 +59,7 @@
                                                 <#if upAssignment.upHitResult.chosenChildrenSummaries[childId]??>
                                                    <#if upAssignment.upHitResult.chosenChildrenSummaries[childId]==summary?index>checked</#if>
                                                 </#if>>
-                                        ${summary}
+                                        ${summary?html?replace('\n', '<br>')}
                                         </label>
                                     </div>
                                 </#list>
@@ -85,7 +85,7 @@
                 <label>Parents' summaries</label>
                 <ul>
                     <#list downHit.parentsSummaries as parentSummary>
-                        <li>${parentSummary}</li>
+                        <li>${parentSummary?html?replace('\n', '<br>')}</li>
                     </#list>
                 </ul>
 
@@ -102,14 +102,14 @@
 
                         <div class="form-group row">
                             <label class="col-form-label col-sm-2">Summary for (${childIdAndSummary.left})</label>
-                            <div class="col-sm-10 form-control-static">${childIdAndSummary.right}</div>
+                            <div class="col-sm-10 form-control-static">${childIdAndSummary.right?html?replace('\n', '<br>')}</div>
                         </div>
                         <div class="form-group row">
                             <label class="col-form-label col-sm-2">Most important event</label>
                             <div class="col-sm-10">
                                 <textarea name="${hitAssignmentId}_event_${childIdAndSummary?index}"
                                           autocomplete="off" class="form-control "
-                                >${event}</textarea>
+                                >${event?html?replace('\n', '<br>')}</textarea>
                             </div>
 
                         </div>
@@ -153,7 +153,7 @@
                 <div class="form-group row">
                     <label class="form-control-label col-sm-2">Root node summaries</label>
                     <div class="col-sm-10">
-                        <span class="form-control-static">${causalityHit.globalSummary}</span>
+                        <span class="form-control-static">${causalityHit.globalSummary?html?replace('\n', '<br>')}</span>
                     </div>
                 </div>
                 <ul>
@@ -162,7 +162,7 @@
                         <div class="form-group row">
                             <label class="form-control-label col-sm-1">Event</label>
                             <div class="col-sm-11">
-                                <span class="form-control-static">${causalityQuestion.question}</span>
+                                <span class="form-control-static">${causalityQuestion.question?html?replace('\n', '<br>')}</span>
                             </div>
                         </div>
 
@@ -176,7 +176,7 @@
                                         <input type="checkbox" class="form-check-input"
                                         ${causalityAssignment.causalityHitResult.causeNodeIds?seq_contains(questionNodeId+':'+cause.nodeId)?then('checked','')}
                                                name="${inputName}">
-                                        ${cause.text}
+                                        ${cause.text?html?replace('\n', '<br>')}
                                     </label>
                                 </div>
                             </#list>
