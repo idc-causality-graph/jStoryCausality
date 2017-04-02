@@ -9,58 +9,18 @@
             crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.19.1/vis.min.css"
           integrity="sha384-ZAt6HD4d7/ihTBxD8xtsI0We2gW8Qtr3657zMpcGmTg4A+VJydp4L2dbT+JaYS8Z" crossorigin="anonymous">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/micromustache/4.1.1/micromustache.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/micromustache/4.1.1/micromustache.min.js"
+            integrity="sha384-8TpUV/Xw6Z899iNaIwlUghCAtR3JnqLxrR5PziHRMidPTR7PWlMx/nU9GW8GIkfT"
+            crossorigin="anonymous"></script>
 
     <script type="application/javascript">
         $(function () {
 
             // TEMPLATE STUFF
-            var MAX_EDGES = 4;
+            var MAX_EDGES = ${causalityReplicaFactor};
+
             //rawData contains all (pseaduo) leaf nodes, in the chronological order, as appears in the upper nodeLevels
-            var rawData = [
-                {
-                    "id": "0BJkDFNfLqUr",
-                    "summary": "One dollar and eighty-seven cents. That was all. And sixty cents of it was in pennies. Pennies saved one and two at a time by bulldozing the grocer and the vegetable man and the butcher until one's cheeks burned with the silent imputation of parsimony that such close dealing implied. Three times Della counted it. One dollar and eighty-seven cents. And the next day would be Christmas.",
-                    "fullText": null,
-                    "causeTo": ["aq1EN8ZaAZds", "aq1EN8ZaAZds", "cJl7tdqxlRws", "cJl7tdqxlRws"],
-                    "importanceScore": 0.9444444444444445
-                },
-                {
-                    "id": "cJl7tdqxlRws",
-                    "summary": "There was clearly nothing left to do but flop down on the shabby little couch and howl. So Della did it. Which instigates the moral reflection that life is made up of sobs, sniffles, and smiles, with sniffles predominating.\nWhile the mistress of the home is gradually subsiding from the first stage to the second, take a look at the home. A furnished flat at $8 per week. It did not exactly beggar description, but it certainly had that word on the look-out for the mendicancy squad.",
-                    "fullText": null,
-                    "causeTo": ["aq1EN8ZaAZds"],
-                    "importanceScore": 0.7777777777777778
-                },
-                {
-                    "id": "9KtG88XiKZkk",
-                    "summary": "In the vestibule below was a letter-box into which no letter would go, and an electric button from which no mortal finger could coax a ring. Also appertaining thereunto was a card bearing the name \"Mr. James Dillingham Young.\"\nThe \"Dillingham\" had been flung to the breeze during a former period of prosperity when its possessor was being paid $30 per week. Now, when the income was shrunk to $20, the letters of \"Dillingham\" looked blurred, as though they were thinking seriously of contracting to a modest and unassuming D. But whenever Mr. James Dillingham Young came home and reached his flat above he was called \"Jim\" and greatly hugged by Mrs. James Dillingham Young, already introduced to you as Della. Which is all very good.",
-                    "fullText": null,
-                    "causeTo": ["aq1EN8ZaAZds"],
-                    "importanceScore": 0.7222222222222222
-                },
-                {
-                    "id": "aq1EN8ZaAZds",
-                    "summary": "Della finished her cry and attended to her cheeks with the powder rag. She stood by the window and looked out dully at a grey cat walking a grey fence in a grey backyard. Tomorrow would be Christmas Day, and she had only $1.87 with which to buy Jim a present. She had been saving every penny she could for months, with this result. Twenty dollars a week doesn't go far. Expenses had been greater than she had calculated. They always are. Only $1.87 to buy a present for Jim. Her Jim. Many a happy hour she had spent planning for something nice for him. Something fine and rare and sterling - something just a little bit near to being worthy of the honour of being owned by Jim.",
-                    "fullText": null,
-                    "causeTo": ["uKcHcSa6EOcq", "uKcHcSa6EOcq", "uKcHcSa6EOcq", "8IkZnwzaPnfe"],
-                    "importanceScore": 0.8919753086419755
-                },
-                {
-                    "id": "uKcHcSa6EOcq",
-                    "summary": "There was a pier-glass between the windows of the room. Perhaps you have seen a pier-glass in an $8 Bat. A very thin and very agile person may, by observing his reflection in a rapid sequence of longitudinal strips, obtain a fairly accurate conception of his looks. Della, being slender, had mastered the art.\nSuddenly she whirled from the window and stood before the glass. Her eyes were shining brilliantly, but her face had lost its colour within twenty seconds. Rapidly she pulled down her hair and let it fall to its full length.",
-                    "fullText": null,
-                    "causeTo": ["8IkZnwzaPnfe", "8IkZnwzaPnfe"],
-                    "importanceScore": 0.7420634920634921
-                },
-                {
-                    "id": "8IkZnwzaPnfe",
-                    "summary": "Now, there were two possessions of the James Dillingham Youngs in which they both took a mighty pride. One was Jim's gold watch that had been his father's and his grandfather's. The other was Della's hair. Had the Queen of Sheba lived in the flat across the airshaft, Della would have let her hair hang out of the window some day to dry just to depreciate Her Majesty's jewels and gifts. Had King Solomon been the janitor, with all his treasures piled up in the basement, Jim would have pulled out his watch every time he passed, just to see him pluck at his beard from envy.",
-                    "fullText": null,
-                    "causeTo": [],
-                    "importanceScore": 0.8919753086419755
-                }
-            ];
+            var rawData = ${rawData};
 
             // END OF TEMPLATE STUFF
 
@@ -73,9 +33,7 @@
             var datasetMap = {};
 
             function pickHex(color1, color2, weight) {
-                var p = weight;
-                var w = p * 2 - 1;
-                var w1 = (w / 1 + 1) / 2;
+                var w1 = weight;
                 var w2 = 1 - w1;
                 var rgb = [Math.round(color1[0] * w1 + color2[0] * w2),
                     Math.round(color1[1] * w1 + color2[1] * w2),
@@ -200,10 +158,11 @@
 
     <script type="text/x-mustache" id="item_template">
     <div class="item" id="data_item_{{id}}">
-<p>Item #{{item_number}}</p>
+<p>Item {{item_number}}</p>
 <p>Score: {{score}}</p>
 <p>{{summary}}</p>
 </div>
+
     </script>
 
     <style>

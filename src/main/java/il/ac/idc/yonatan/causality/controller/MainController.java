@@ -1,5 +1,6 @@
 package il.ac.idc.yonatan.causality.controller;
 
+import il.ac.idc.yonatan.causality.config.AppConfig;
 import il.ac.idc.yonatan.causality.contexttree.ContextTree;
 import il.ac.idc.yonatan.causality.contexttree.ContextTreeManager;
 import il.ac.idc.yonatan.causality.mturk.HitManager;
@@ -20,11 +21,13 @@ public class MainController {
     private final ContextTreeManager contextTreeManager;
 
     private final HitManager hitManager;
+    private final AppConfig appConfig;
 
     @Autowired
-    public MainController(ContextTreeManager contextTreeManager, HitManager hitManager) {
+    public MainController(ContextTreeManager contextTreeManager, HitManager hitManager, AppConfig appConfig) {
         this.contextTreeManager = contextTreeManager;
         this.hitManager = hitManager;
+        this.appConfig = appConfig;
     }
 
     @GetMapping("contextTree")
@@ -44,6 +47,15 @@ public class MainController {
         contextTreeManager.reset();
         hitManager.reset();
         return "redirect:/contextTree";
+    }
+
+    @GetMapping("contextTree/causalityGraph")
+    public String generateGraph(Model model) {
+        int causalityReplicaFactor = appConfig.getCausalityReplicaFactor();
+        model.addAttribute("causalityReplicaFactor", causalityReplicaFactor);
+        String causalityGraphJson = contextTreeManager.getCausalityGraphJson(appConfig.isUseMetaLeafs());
+        model.addAttribute("rawData", causalityGraphJson);
+        return "outputGraph";
     }
 
 }

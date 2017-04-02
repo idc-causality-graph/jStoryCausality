@@ -1,7 +1,10 @@
 package il.ac.idc.yonatan.causality.contexttree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multiset;
 import freemarker.template.Configuration;
 import il.ac.idc.yonatan.causality.config.AppConfig;
 import lombok.SneakyThrows;
@@ -49,6 +52,43 @@ public class ContextTreeManager {
     public ContextTree getContextTree() {
         init();
         return contextTree;
+    }
+
+    @SneakyThrows
+    public String getCausalityGraphJson(boolean metaLeaf) {
+        init();
+        log.debug("USing metaLeafs? {}", metaLeaf);
+        NodeLevel leafs;
+        if (metaLeaf) {
+            leafs = contextTree.getMetaLeafNodeLevel();
+        } else {
+            leafs = contextTree.getLeafNodeLevel();
+        }
+
+        ArrayNode nodesArray = objectMapper.createArrayNode();
+        for (Node node : leafs.getNodes()) {
+            ObjectNode jsonNode = objectMapper.createObjectNode();
+            nodesArray.add(jsonNode);
+            jsonNode.put("id", node.getId());
+            jsonNode.put("summary", node.getBestSummary());
+            Multiset<String> targetNodeIds = node.getCausalityData().getTargetNodeIds();
+            ArrayNode causeTo = objectMapper.createArrayNode();
+            jsonNode.set("causeTo", causeTo);
+            for (Multiset.Entry<String> causeEntry : targetNodeIds.entrySet()) {
+                int count = causeEntry.getCount();
+                for (int i = 0; i < count; i++) {
+                    causeTo.add(causeEntry.getElement());
+                }
+            }
+            jsonNode.put("importanceScore", node.getNormalizedImportanceScore());
+            String fullText = null;
+            if (!node.getChildIds().isEmpty()) {
+                Node child = node.getChildren().get(0);
+                fullText = child.getBestSummary();
+            }
+            jsonNode.put("fullText", fullText);
+        }
+        return nodesArray.toString();
     }
 
     public void reset() throws IOException {

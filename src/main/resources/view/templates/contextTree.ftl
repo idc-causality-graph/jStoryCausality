@@ -121,6 +121,12 @@
                     <a class="nav-link" target="_blank" href="/contextTree/reviewsCausalityPhase">Review causality
                         HITs</a>
                 </li>
+                <li class="nav-item active">
+                    <a class="nav-link" target="_blank" href="/contextTree/causalityGraph">Show graph</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" target="_blank" href="/contextTree/causalityGraph" download>Download graph</a>
+                </li>
             <#if sandbox>
                 <li class="nav-item active">
                     <a class="nav-link" target="_blank" href="/hits">HIT Worker UI</a>
