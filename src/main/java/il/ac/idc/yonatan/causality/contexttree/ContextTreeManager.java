@@ -57,7 +57,7 @@ public class ContextTreeManager {
     @SneakyThrows
     public String getCausalityGraphJson(boolean metaLeaf) {
         init();
-        log.debug("USing metaLeafs? {}", metaLeaf);
+        log.debug("Using metaLeafs? {}", metaLeaf);
         NodeLevel leafs;
         if (metaLeaf) {
             leafs = contextTree.getMetaLeafNodeLevel();
