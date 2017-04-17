@@ -58,12 +58,12 @@
                 datasetMap[item.id] = item;
                 var normScore = (item.importanceScore - minScore) / (maxScore - minScore);
                 datasetNodes.push($.extend(
-                    {
-                        y: i,
-                        label: 'Item ' + i,
-                        color: pickHex(MOST_IMPORTANT_COLOR, LEST_IMPORTANT_COLOR, normScore),
-                        title: shorten(item.summary)
-                    }, item));
+                        {
+                            y: i,
+                            label: 'Part ' + (i + 1),
+                            color: pickHex(MOST_IMPORTANT_COLOR, LEST_IMPORTANT_COLOR, normScore),
+                            title: shorten(item.summary)
+                        }, item));
                 var itemId = item.id;
                 item.causeTo.forEach(function (toItemId) {
                     var newEdge = {
@@ -136,7 +136,7 @@
             rawData.forEach(function (item, i) {
                 var data = {
                     id: item.id,
-                    item_number: i,
+                    item_number: i + 1,
                     score: item.importanceScore,
                     summary: handleNewlines(item.summary)
                 };
@@ -158,7 +158,7 @@
 
     <script type="text/x-mustache" id="item_template">
     <div class="item" id="data_item_{{id}}">
-<p>Item {{item_number}}</p>
+<p>Part # {{item_number}}</p>
 <p>Score: {{score}}</p>
 <p>{{summary}}</p>
 </div>
