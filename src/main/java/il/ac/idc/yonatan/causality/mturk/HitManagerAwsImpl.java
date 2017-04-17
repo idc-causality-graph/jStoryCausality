@@ -29,6 +29,10 @@ import mturk.wsdl.Errors;
 import mturk.wsdl.ExtendHIT;
 import mturk.wsdl.ExtendHITRequest;
 import mturk.wsdl.ExtendHITResponse;
+import mturk.wsdl.GetAccountBalance;
+import mturk.wsdl.GetAccountBalanceRequest;
+import mturk.wsdl.GetAccountBalanceResponse;
+import mturk.wsdl.GetAccountBalanceResult;
 import mturk.wsdl.GetAssignmentsForHIT;
 import mturk.wsdl.GetAssignmentsForHITRequest;
 import mturk.wsdl.GetAssignmentsForHITResponse;
@@ -280,20 +284,20 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         QualificationRequirement percentAssignmentsApprovedRequirement = new QualificationRequirement();
         percentAssignmentsApprovedRequirement.setComparator(Comparator.GREATER_THAN_OR_EQUAL_TO);
         percentAssignmentsApprovedRequirement.setQualificationTypeId("000000000000000000L0");
-        percentAssignmentsApprovedRequirement.getIntegerValue().add(95);
+        percentAssignmentsApprovedRequirement.getIntegerValue().add(90);
         chr.getQualificationRequirement().add(percentAssignmentsApprovedRequirement);
 
         QualificationRequirement numberHitsApprovedRequirement = new QualificationRequirement();
         numberHitsApprovedRequirement.setComparator(Comparator.GREATER_THAN_OR_EQUAL_TO);
         numberHitsApprovedRequirement.setQualificationTypeId("00000000000000000040");
-        numberHitsApprovedRequirement.getIntegerValue().add(1000);
+        numberHitsApprovedRequirement.getIntegerValue().add(100);
         chr.getQualificationRequirement().add(numberHitsApprovedRequirement);
 
-        QualificationRequirement mastersRequirement = new QualificationRequirement();
-        mastersRequirement.setComparator(Comparator.EXISTS);
-        mastersRequirement.setQualificationTypeId(appConfig.isSandbox() ?
-                "2ARFPLSP75KLA8M8DH1HTEQVJT3SY6" : "2F1QJWKUDD8XADTFD2Q0G6UTO95ALH");
-        chr.getQualificationRequirement().add(mastersRequirement);
+//        QualificationRequirement mastersRequirement = new QualificationRequirement();
+//        mastersRequirement.setComparator(Comparator.EXISTS);
+//        mastersRequirement.setQualificationTypeId(appConfig.isSandbox() ?
+//                "2ARFPLSP75KLA8M8DH1HTEQVJT3SY6" : "2F1QJWKUDD8XADTFD2Q0G6UTO95ALH");
+//        chr.getQualificationRequirement().add(mastersRequirement);
 
     }
 
@@ -505,6 +509,15 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
         submitHitReview(hitId, assignmentId, hitApproved, reason);
     }
 
+    public BigDecimal getAccountBalance(){
+        GetAccountBalance getAccountBalance=new GetAccountBalance();
+        setAwsRequestHeaders(getAccountBalance);
+        getAccountBalance.getRequest().add(new GetAccountBalanceRequest());
+        GetAccountBalanceResponse response= mturkSubmit(getAccountBalance);
+        assertMturkResponse(response, "getAccountBalanceResult");
+        return response.getGetAccountBalanceResult().get(0).getAvailableBalance().getAmount();
+    }
+
 
     private static Jaxb2Marshaller marshaller() {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
@@ -548,6 +561,8 @@ public class HitManagerAwsImpl extends WebServiceGatewaySupport implements HitMa
 //                        new CausalityQuestion.CauseAndNodeId("c2.3", "nid3")
 //                ),
 //                "qid2");
+//
+//        System.out.println(mturkClient.getAccountBalance());
 //        ////Create hit
 //        //        String hit1 = mturkClient.createCausalityHit("global summary", newArrayList(cq1, cq2));
 ////        String hit2 = mturkClient.createCausalityHit("global summary", newArrayList(cq1, cq2));

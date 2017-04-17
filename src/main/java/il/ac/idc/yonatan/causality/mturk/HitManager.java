@@ -6,6 +6,7 @@ import il.ac.idc.yonatan.causality.mturk.data.DownHitResult;
 import il.ac.idc.yonatan.causality.mturk.data.UpHitResult;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -26,11 +27,13 @@ public interface HitManager {
 
     void submitCausalityHitReview(String hitId, String assignmentId, boolean hitApproved, String reason);
 
-    String createDownHit(List<String> parentsSummaries, List<Pair<String,String>> childrenIdsAndSummaries,
+    String createDownHit(List<String> parentsSummaries, List<Pair<String, String>> childrenIdsAndSummaries,
                          boolean isLeaf, int replicas);
 
     void reset();
 
     String createCausalityHit(String globalSummary, List<CausalityQuestion> causalityHitQuestions);
+
+    BigDecimal getAccountBalance();
 
 }

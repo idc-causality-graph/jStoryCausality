@@ -6,13 +6,16 @@ import il.ac.idc.yonatan.causality.contexttree.ContextTreeManager;
 import il.ac.idc.yonatan.causality.mturk.HitManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 @Controller
 @Slf4j
@@ -56,6 +59,12 @@ public class MainController {
         String causalityGraphJson = contextTreeManager.getCausalityGraphJson(appConfig.isUseMetaLeafs());
         model.addAttribute("rawData", causalityGraphJson);
         return "outputGraph";
+    }
+
+    @GetMapping(path="contextTree/rest/balance",produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public BigDecimal getAvailableBalance(){
+        return hitManager.getAccountBalance();
     }
 
 }

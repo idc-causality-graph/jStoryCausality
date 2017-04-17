@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -151,7 +152,7 @@ public class HitManagerMockImpl implements HitManager {
     }
 
     @Override
-    public boolean isSandbox(){
+    public boolean isSandbox() {
         return true;
     }
 
@@ -295,6 +296,11 @@ public class HitManagerMockImpl implements HitManager {
         }
         saveDb(db);
         return hitId;
+    }
+
+    @Override
+    public BigDecimal getAccountBalance() {
+        return new BigDecimal(1000.0);
     }
 
     @Override

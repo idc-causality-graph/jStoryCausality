@@ -51,8 +51,28 @@
         ul.tree li.last {
             background: #fff url(http://odyniec.net/articles/turning-lists-into-trees/lastnode.png) no-repeat;
         }
+
+        .loader {
+            border: 3px solid #f3f3f3; /* Light grey */
+            border-top: 3px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #account_balance {
+            display: inline-block;
+        }
     </style>
+
     <script language="JavaScript" type="application/javascript">
+
         $(function () {
             var $inputs = $('#root_node_form input');
             $inputs.click(function () {
@@ -88,6 +108,15 @@
                 return true;
 
             });
+
+            var loadBalance = function(){
+                $("#account_balance").addClass("loader").empty();
+                $.get("/contextTree/rest/balance", function(data){
+                    $("#account_balance").empty().removeClass("loader").text("$"+data);
+                });
+            };
+            loadBalance();
+            $("#production_btn").click(loadBalance);
         });
     </script>
 
@@ -142,7 +171,7 @@
             <div class="btn-group" role="group">
                 <div class="btn-group mr-3" role="group">
                 <#if !sandbox>
-                    <button class="btn btn-danger">PRODUCTION</button></#if>
+                    <button id="production_btn" class="btn btn-danger">PRODUCTION <span id="account_balance" class="loader"></span></button></#if>
                     <button class="btn btn-secondary"
                             formaction="/contextTree/progressUp" formmethod="post" form="frm_progressup"
                             type="submit" ${(phase!='UP_PHASE')?then('disabled','')}>
